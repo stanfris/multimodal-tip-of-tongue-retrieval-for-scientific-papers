@@ -56,6 +56,8 @@ class TransformersBackend:
         except Exception as exc:
             if len(requests) == 1:
                 return [GenerationResult(requests[0].request_id, error=exc)]
+            print(f"Transformers batch of {len(requests)} requests failed; retrying as smaller batches: {exc}",
+                  flush=True)
             middle = len(requests) // 2
             return self.generate(requests[:middle]) + self.generate(requests[middle:])
 
