@@ -225,8 +225,25 @@ The model choices are set to the defaults applied in our work. Query generation 
 scripts/clue_generation/describe_all_figures.sh split=train launcher=pbs_h200 model=qwen3_vl model.provider=vllm
 scripts/clue_generation/describe_all_textual_clues.sh split=train launcher=pbs_h200 model=qwen3_text model.provider=vllm
 scripts/query_generation/generate_queries.sh split=train launcher=pbs_h200 model=phi4 model.provider=vllm
-scripts/query_generation/judge_train_queries.sh split=train launcher=pbs_h200 model=gemma3_judge model.provider=vllm
 ```
+
+For the standalone Gemma judge, run the following on the cluster where `uv run hf auth whoami` confirms your login. Your account must have access to `google/gemma-3-27b-it`, vLLM must be installed in the main `.venv`, and the saved token file must be accessible from the compute node.
+
+```bash
+HF_TOKEN_FILE="$(uv run python -c 'from huggingface_hub.constants import HF_TOKEN_PATH; print(HF_TOKEN_PATH)')"
+
+scripts/query_generation/judge_train_queries.sh \
+  split=train \
+  launcher=pbs_h200 \
+  model=gemma3_judge \
+  model.provider=vllm \
+  visual_query.judgement.provider=vllm \
+  "+launcher.environment.HF_TOKEN_PATH=$HF_TOKEN_FILE"
+```
+
+The explicit judge provider override is required because the shared visual-query defaults overwrite the stage's provider selection. Passing `HF_TOKEN_PATH` lets the PBS worker use your saved login even when the launcher changes `HF_HOME`; it also avoids writing the token itself into the saved configuration or job script. Append `stage.limit=2` for an initial two-query smoke test.
+
+Standalone query judgements are appended to `data/query_collections/<domain>/query_generation_train/visual_and_text/query_judgements.jsonl` beside `queries.jsonl` (use `query_generation_test` for the test split). The stage prints the resolved input/output paths before loading the model, announces model readiness and each inference batch, and reports progress only after a judgement has been flushed and synced to disk, using the same progress style as query generation. Existing query IDs are skipped on reruns. The H200 judgement batch size defaults to 64; override it with `visual_query.judgement.batch_size=NUMBER`. Results are saved after each batch returns. No judgements can be written while the model is still initializing.
 
 Query generation considers at most the first 15 images in each paper. Set `visual_query.selection.max_images=NUMBER` to change this cap; it also applies to clue coverage and images sent to the optional query judge.
 

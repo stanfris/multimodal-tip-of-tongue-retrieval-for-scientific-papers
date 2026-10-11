@@ -25,7 +25,7 @@ def test_test_set_accepts_three_query_limit(tmp_path: Path, monkeypatch) -> None
     assert captured["limit"] == 3
 
 
-def test_limit_applies_to_each_mode_and_visual_text_runs_first(tmp_path: Path, monkeypatch) -> None:
+def test_limit_applies_to_combined_queries_and_includes_existing(tmp_path: Path, monkeypatch) -> None:
     config = replace(
         query_generation.QueryGenerationConfig(
             dataset=tmp_path,
@@ -34,7 +34,7 @@ def test_limit_applies_to_each_mode_and_visual_text_runs_first(tmp_path: Path, m
             clues_dir=tmp_path,
             output_dir=tmp_path / "output",
         ),
-        modes=("visual-only", "visual-and-text"),
+        modes=("visual-and-text",),
     )
     calls = []
 
@@ -56,13 +56,13 @@ def test_limit_applies_to_each_mode_and_visual_text_runs_first(tmp_path: Path, m
     monkeypatch.setattr(query_generation, "_generate_mode_examples_from_papers", fake_mode)
     query_generation._generate_query_collections_from_preprocessed(config, "prompt", "hash", None, None, limit=3)
 
-    assert calls == [("visual-and-text", 3, 3), ("visual-only", 3, 3)]
+    assert calls == [("visual-and-text", 3, 3)]
 
     calls.clear()
     existing_queries = [QueryExample(f"existing-{index}", "query", []) for index in range(3)]
 
     def fake_existing(path, mode):
-        examples = existing_queries if mode == "visual-and-text" else []
+        examples = existing_queries
         return query_generation.ExistingQueryState(examples, set(), set())
 
     monkeypatch.setattr(query_generation, "_read_existing_query_state", fake_existing)
@@ -70,4 +70,4 @@ def test_limit_applies_to_each_mode_and_visual_text_runs_first(tmp_path: Path, m
         replace(config, resume=True), "prompt", "hash", None, None, limit=3
     )
 
-    assert calls == [("visual-and-text", 3, 0), ("visual-only", 3, 3)]
+    assert calls == [("visual-and-text", 3, 0)]

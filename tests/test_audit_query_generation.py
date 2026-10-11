@@ -25,8 +25,8 @@ def test_audit_separates_incomplete_clues_from_eligible_missing_query(tmp_path) 
             )
 
     report = audit(settings, "test")
-    assert report["domains"]["ACL"]["visual-only"]["reasons"]["eligible_but_no_query"] == ["ACL_paper"]
-    assert report["domains"]["Biology"]["visual-only"]["reasons"]["missing_usable_figure_clue"] == ["Biology_paper"]
+    assert report["domains"]["ACL"]["visual-and-text"]["reasons"]["eligible_but_no_query"] == ["ACL_paper"]
+    assert report["domains"]["Biology"]["visual-and-text"]["reasons"]["missing_usable_figure_clue"] == ["Biology_paper"]
     assert json.loads(json.dumps(report))["papers_selected_for_queries"] == 2
 
 

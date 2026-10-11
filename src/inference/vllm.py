@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import time
 from typing import Any
 
 from inference.base import GenerationRequest, GenerationResult, ordered_results
@@ -23,13 +24,18 @@ class VLLMBackend:
         mm_kwargs = processor_image_kwargs(model, image)
         if mm_kwargs:
             kwargs["mm_processor_kwargs"] = {**kwargs.get("mm_processor_kwargs", {}), **mm_kwargs}
+        print(f"Initializing vLLM engine for {model}; loading weights, profiling and warmup.", flush=True)
+        started = time.monotonic()
         self.llm = LLM(model=model, **kwargs)
+        print(f"vLLM engine ready in {time.monotonic() - started:.1f}s; loading chat processor.", flush=True)
+        started = time.monotonic()
         try:
             self.processor = AutoProcessor.from_pretrained(model)
             if not hasattr(self.processor, "apply_chat_template"):
                 self.processor = AutoTokenizer.from_pretrained(model)
         except (OSError, ValueError):
             self.processor = AutoTokenizer.from_pretrained(model)
+        print(f"vLLM chat processor ready in {time.monotonic() - started:.1f}s", flush=True)
 
     def generate(self, requests: list[GenerationRequest]) -> list[GenerationResult]:
         if not requests:

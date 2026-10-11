@@ -46,7 +46,7 @@ def test_query_generation_reads_domain_clues_and_writes_domain_collections(tmp_p
         textual_interpretations=None,
         clues_dir=clues,
         output_dir=tmp_path / "query_collections",
-        modes=("visual-only",),
+        modes=("visual-and-text",),
         collection_id="query_generation_test",
     )
     components = query_generation._components_by_paper(
@@ -68,7 +68,7 @@ def test_query_generation_reads_domain_clues_and_writes_domain_collections(tmp_p
 
     assert remaining == [2, 1]
     for domain in ("ACL", "Biology"):
-        path = config.output_dir / domain / config.collection_id / "visual_only" / "queries.jsonl"
+        path = config.output_dir / domain / config.collection_id / "visual_and_text" / "queries.jsonl"
         assert path.exists()
         assert json.loads(path.read_text().splitlines()[0])["relevant_ids"] == [f"{domain}_paper"]
     assert not (config.output_dir / config.collection_id).exists()
@@ -91,12 +91,12 @@ def test_query_generation_limits_images_before_clue_coverage_and_selection(tmp_p
 
     config = query_generation.QueryGenerationConfig(
         dataset=dataset, visual_interpretations=None, textual_interpretations=None,
-        clues_dir=clues, output_dir=tmp_path / "queries", modes=("visual-only",),
+        clues_dir=clues, output_dir=tmp_path / "queries", modes=("visual-and-text",),
         max_images=1,
     )
     query_generation._generate_query_collections_from_preprocessed(config, "{selected_cues}", "hash", None, None)
 
-    path = config.output_dir / "ACL" / config.collection_id / "visual_only" / "queries.jsonl"
+    path = config.output_dir / "ACL" / config.collection_id / "visual_and_text" / "queries.jsonl"
     row = json.loads(path.read_text().splitlines()[0])
     assert row["metadata"]["selected_visual_count"] == 1
     assert row["metadata"]["max_images"] == 1
@@ -141,7 +141,7 @@ def test_managed_judgement_reads_and_writes_each_domain_collection(tmp_path: Pat
     output = tmp_path / "data" / "query_collections"
     for domain in ("ACL", "Biology"):
         paper = _paper(dataset, domain)
-        query_dir = output / domain / "managed_test" / "visual_only"
+        query_dir = output / domain / "managed_test" / "visual_and_text"
         query_dir.mkdir(parents=True)
         (query_dir / "queries.jsonl").write_text(
             json.dumps({
@@ -159,7 +159,7 @@ def test_managed_judgement_reads_and_writes_each_domain_collection(tmp_path: Pat
     assert judge_queries.main(args) == 0
 
     for domain in ("ACL", "Biology"):
-        path = output / domain / "managed_test" / "visual_only" / "query_judgements.jsonl"
+        path = output / domain / "managed_test" / "visual_and_text" / "query_judgements.jsonl"
         assert json.loads(path.read_text().splitlines()[0])["paper_id"] == f"{domain}_paper"
 
 
@@ -172,7 +172,7 @@ def test_judgement_reads_staged_paper_with_pdf_split_index(tmp_path: Path, monke
     split_index = data_root / "splits" / "index.json"
     split_index.parent.mkdir(parents=True)
     split_index.write_text(json.dumps({"train": ["Physics/paper.pdf"]}), encoding="utf-8")
-    query_dir = data_root / "query_collections" / "Physics" / "query_generation_train" / "visual_only"
+    query_dir = data_root / "query_collections" / "Physics" / "query_generation_train" / "visual_and_text"
     query_dir.mkdir(parents=True)
     (query_dir / "queries.jsonl").write_text(json.dumps({
         "query_id": "q1", "query": "Find the figure", "relevant_ids": ["Physics_paper"],
@@ -188,7 +188,7 @@ def test_judgement_reads_staged_paper_with_pdf_split_index(tmp_path: Path, monke
 
     monkeypatch.setattr(judge_queries, "judge_query", fake_judge)
     args = judge_queries.build_parser().parse_args([
-        "--data-dir", str(data_root), "--split-index", str(split_index), "--mode", "visual-only",
+        "--data-dir", str(data_root), "--split-index", str(split_index), "--mode", "visual-and-text",
     ])
     assert judge_queries.main(args) == 0
     assert seen == [(str(paper_dir / "markdown.md"), str((paper_dir / "images" / "figure.png").resolve()))]

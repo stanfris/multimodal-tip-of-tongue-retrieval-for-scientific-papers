@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -126,12 +127,12 @@ visual_query:
     attn_implementation: "sdpa"
     run:
       modes:
-        - visual-only
+        - visual-and-text
       limit: 7
       overwrite: true
   selection:
     modes:
-      - visual-only
+      - visual-and-text
     visual_component_budget: 3
     textual_component_budget: 3
     allow_partial_components: false
@@ -241,7 +242,7 @@ def test_managed_settings_load_posthoc_judgement_stage(tmp_path: Path) -> None:
     assert managed.split == "test"
     assert managed.input_dir == tmp_path / "data" / "query_collections"
     assert managed.collection_id == "managed_test"
-    assert managed.mode == ["visual-only"]
+    assert managed.mode == ["visual-and-text"]
     assert managed.prompt == tmp_path / "prompts" / "query_judgement.v1.txt"
     assert managed.model == "google/gemma-3-27b-it"
     assert managed.limit == 7
@@ -273,7 +274,28 @@ def test_query_ids_use_canonical_embedded_split_after_windowing() -> None:
     selected = _eligible_papers(papers, config)
 
     assert [paper["paper_id"] for _, paper in selected] == ["paper-3", "paper-4"]
-    assert [_query_id("visual-only", index, config) for index, _ in selected] == [
-        "train_visual_only_q00003",
-        "train_visual_only_q00004",
+    assert [_query_id("visual-and-text", index, config) for index, _ in selected] == [
+        "train_visual_and_text_q00003",
+        "train_visual_and_text_q00004",
     ]
+
+
+def test_query_modes_are_restricted_to_combined_queries(tmp_path: Path) -> None:
+    from queries.judge_queries import main as judge_queries
+    from queries.query_generation import _generate_query_collections_from_preprocessed
+
+    settings = write_settings(tmp_path)
+    args = build_judgement_parser().parse_args(["--settings", str(settings), "--set", "test"])
+    managed, config = load_managed_judgement_args(args)
+    assert managed.mode == ["visual-and-text"]
+    assert config.modes == ("visual-and-text",)
+    mode_argument = next(action for action in build_judgement_parser()._actions if action.dest == "mode")
+    assert list(mode_argument.choices) == ["visual-and-text"]
+
+    settings.write_text(settings.read_text().replace("visual-and-text", "unsupported"))
+    with pytest.raises(ValueError, match="Unsupported query mode"):
+        judge_queries(args)
+    with pytest.raises(ValueError, match="Unsupported query mode"):
+        _generate_query_collections_from_preprocessed(
+            replace(config, modes=("unsupported",)), "prompt", "hash", None, None
+        )

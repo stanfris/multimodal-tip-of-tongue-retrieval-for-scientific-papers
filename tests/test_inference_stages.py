@@ -85,7 +85,7 @@ def test_query_generation_uses_batched_backend(monkeypatch: pytest.MonkeyPatch, 
     monkeypatch.setattr(stage, "_has_complete_clue_coverage", lambda *args: True)
     monkeypatch.setattr(stage, "select_components", lambda components, mode: components)
     examples = stage._generate_mode_examples_from_papers(
-        "visual-only", papers, {paper["paper_id"]: [component] for _, paper in papers},
+        "visual-and-text", papers, {paper["paper_id"]: [component] for _, paper in papers},
         config, "{selected_cues}", backend, None)
     assert len(examples) == 3
     assert [len(call) for call in backend.calls] == [2, 1]
@@ -113,7 +113,7 @@ def test_judgement_uses_same_multimodal_backend(tmp_path: Path) -> None:
         judge_queries=True, judgement_model_provider="vllm", judgement_prompt=prompt)
     paper = {"paper_id": "paper", "markdown_path": str(markdown),
              "figures": [{"image_path": str(tmp_path / "figure.png")}]}
-    judgement = stage.judge_query("visual-only", paper, [], "query", config, backend)
+    judgement = stage.judge_query("visual-and-text", paper, [], "query", config, backend)
     assert judgement["grounded"] is True
     assert backend.calls[0][0].images == (tmp_path / "figure.png",)
 
@@ -126,7 +126,7 @@ def test_judgement_stage_batches_and_preserves_ids(monkeypatch: pytest.MonkeyPat
     papers = [{"paper_id": f"paper-{index}", "markdown_path": str(markdown),
                "figures": [], "split": "train"}
               for index in range(2)]
-    query_dir = tmp_path / "queries" / "visual_only"
+    query_dir = tmp_path / "queries" / "visual_and_text"
     query_dir.mkdir(parents=True)
     query_rows = [{"query_id": f"query-{index}", "query": f"find {index}",
                    "relevant_ids": [f"paper-{index}"], "metadata": {"paper_id": f"paper-{index}"}}
@@ -144,9 +144,90 @@ def test_judgement_stage_batches_and_preserves_ids(monkeypatch: pytest.MonkeyPat
     monkeypatch.setattr(stage, "read_preprocessed_papers", lambda dataset, **kwargs: papers)
     monkeypatch.setattr(stage, "load_query_judge", lambda config: backend)
     args = stage.build_parser().parse_args(["--dataset", str(tmp_path), "--input-dir", str(tmp_path / "queries"),
-                                            "--mode", "visual-only", "--prompt", str(prompt),
+                                            "--mode", "visual-and-text", "--prompt", str(prompt),
                                             "--provider", "vllm", "--batch-size", "2"])
     assert stage.main(args) == 0
     assert len(backend.calls) == 1 and [request.request_id for request in backend.calls[0]] == ["query-0", "query-1"]
     results = [json.loads(line) for line in (query_dir / "query_judgements.jsonl").read_text().splitlines()]
     assert [row["query_id"] for row in results] == ["query-0", "query-1"]
+
+
+def test_judgement_saves_and_reports_before_next_request_and_resumes(monkeypatch, tmp_path, capsys):
+    from queries import judge_queries as stage
+
+    query_dir = tmp_path / "queries" / "visual_and_text"
+    query_dir.mkdir(parents=True)
+    output = query_dir / "query_judgements.jsonl"
+    rows = [{"query_id": f"query-{index}", "query": f"find {index}", "relevant_ids": ["paper"]}
+            for index in range(3)]
+    (query_dir / "queries.jsonl").write_text("\n".join(json.dumps(row) for row in rows) + "\n")
+    prompt = tmp_path / "judge.txt"
+    prompt.write_text("Judge {query}")
+    monkeypatch.setattr(stage, "read_preprocessed_papers", lambda *args, **kwargs: [{"paper_id": "paper", "split": "train"}])
+    monkeypatch.setattr(stage, "format_judgement_prompt", lambda *args: "Judge")
+    args = stage.build_parser().parse_args(["--dataset", str(tmp_path), "--input-dir", str(query_dir.parent),
+                                          "--mode", "visual-and-text", "--prompt", str(prompt)])
+
+    class InterruptedBackend:
+        def generate(self, requests):
+            if requests[0].request_id == "query-1":
+                assert [json.loads(line)["query_id"] for line in output.read_text().splitlines()] == ["query-0"]
+                log = capsys.readouterr().out
+                assert "Judging visual-and-text paper queries: 1/3 queries" in log
+                assert "starting batch 2/3" in log
+                raise KeyboardInterrupt
+            assert not output.exists()
+            return [GenerationResult(requests[0].request_id, '{"grounded": true}')]
+
+    def load(config):
+        log = capsys.readouterr().out
+        assert f"Judgement output: {output}" in log
+        assert "pending=3" in log
+        assert "paper queries: 1/3" not in log
+        return InterruptedBackend()
+
+    monkeypatch.setattr(stage, "load_query_judge", load)
+    with pytest.raises(KeyboardInterrupt):
+        stage.main(args)
+
+    class ResumedBackend(FakeBackend):
+        def generate(self, requests):
+            self.calls.append(requests)
+            return [GenerationResult(request.request_id, '{"grounded": true}') for request in requests]
+
+    backend = ResumedBackend()
+    monkeypatch.setattr(stage, "load_query_judge", lambda config: backend)
+    assert stage.main(args) == 0
+    assert [call[0].request_id for call in backend.calls] == ["query-1", "query-2"]
+    assert [json.loads(line)["query_id"] for line in output.read_text().splitlines()] == ["query-0", "query-1", "query-2"]
+    monkeypatch.setattr(stage, "load_query_judge", lambda config: pytest.fail("Already completed: no model needed"))
+    assert stage.main(args) == 0
+
+
+def test_judgement_failures_are_retried_and_not_counted_as_saved(monkeypatch, tmp_path, capsys):
+    from queries import judge_queries as stage
+
+    query_dir = tmp_path / "queries" / "visual_and_text"
+    query_dir.mkdir(parents=True)
+    rows = [{"query_id": f"query-{index}", "query": "find", "relevant_ids": ["paper"]} for index in range(2)]
+    (query_dir / "queries.jsonl").write_text("\n".join(json.dumps(row) for row in rows))
+    prompt = tmp_path / "judge.txt"
+    prompt.write_text("Judge")
+    monkeypatch.setattr(stage, "read_preprocessed_papers", lambda *args, **kwargs: [{"paper_id": "paper", "split": "train"}])
+    monkeypatch.setattr(stage, "format_judgement_prompt", lambda *args: "Judge")
+
+    class Backend:
+        def generate(self, requests):
+            return [GenerationResult("query-1", '{"grounded": true}'),
+                    GenerationResult("query-0", error=ValueError("bad"))]
+
+    monkeypatch.setattr(stage, "load_query_judge", lambda config: Backend())
+    args = stage.build_parser().parse_args(["--dataset", str(tmp_path), "--input-dir", str(query_dir.parent),
+                                          "--mode", "visual-and-text", "--prompt", str(prompt), "--batch-size", "2"])
+    assert stage.main(args) == 0
+    output = query_dir / "query_judgements.jsonl"
+    assert stage.read_completed_query_ids(output) == {"query-1"}
+    log = capsys.readouterr().out
+    assert "Judgement failed for query-0: bad" in log
+    assert "paper queries: 1/2 queries" in log
+    assert "paper queries: 2/2 queries" not in log

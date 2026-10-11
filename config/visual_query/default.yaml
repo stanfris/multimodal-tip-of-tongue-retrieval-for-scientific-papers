@@ -31,7 +31,6 @@ judgement:
   attn_implementation: ${launcher.attn_implementation}
   run:
     modes:
-    - visual-only
     - visual-and-text
     limit: ${stage.limit}
     overwrite: false

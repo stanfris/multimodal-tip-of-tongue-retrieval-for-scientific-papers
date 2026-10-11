@@ -27,7 +27,7 @@ DEFAULT_PREPROCESSED_DATASET = PROJECT_ROOT / "data/preprocessed"
 ANNOTATIONS_PATH = PROJECT_ROOT / "data/reviews/query_review_annotations.jsonl"
 QUERY_COLLECTION_ROOT = PROJECT_ROOT / "data/query_collections"
 PRIORITY_COLLECTION_IDS = ("query_generation_train", "query_generation_test")
-QUERY_MODES = ("visual_only", "visual_and_text")
+QUERY_MODES = ("visual_and_text",)
 GENERATE_QUERY_COMMANDS = {
     "query_generation_train": "scripts/queries/generate_queries.sh",
     "query_generation_test": "scripts/query_generation/generate_queries.sh split=test",
@@ -159,7 +159,7 @@ def mode_options_for_collection(collection: Path) -> list[str]:
         modes.extend(
             path.name
             for path in sorted(collection.iterdir())
-            if path.is_dir() and (path / "queries.jsonl").exists()
+            if path.name in QUERY_MODES and path.is_dir() and (path / "queries.jsonl").exists()
         )
     if (collection / "queries.jsonl").exists():
         modes.append("default")
@@ -182,7 +182,6 @@ def collection_label(path: Path) -> str:
 
 def mode_label(mode: str) -> str:
     labels = {
-        "visual_only": "visual_only",
         "visual_and_text": "visual_and_text",
         "default": "default / legacy",
     }
@@ -523,7 +522,8 @@ def load_examples(collection: Path) -> list[dict[str, Any]]:
     paths = []
     if (collection / "queries.jsonl").exists():
         paths.append(collection / "queries.jsonl")
-    paths.extend(collection.glob("*/queries.jsonl"))
+    paths.extend(collection / mode / "queries.jsonl" for mode in QUERY_MODES
+                 if (collection / mode / "queries.jsonl").exists())
 
     for query_path in sorted(set(paths)):
         condition = query_path.parent.name if query_path.parent != collection else "default"

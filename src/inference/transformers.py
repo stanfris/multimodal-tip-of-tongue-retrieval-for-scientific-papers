@@ -42,6 +42,8 @@ class TransformersBackend:
             tokenizer.pad_token = tokenizer.eos_token
         if hasattr(tokenizer, "padding_side"):
             tokenizer.padding_side = "left"
+        print(f"Transformers model placement: {getattr(self.model, 'hf_device_map', None) or self.model.device}",
+              flush=True)
 
     def generate(self, requests: list[GenerationRequest]) -> list[GenerationResult]:
         if not requests:

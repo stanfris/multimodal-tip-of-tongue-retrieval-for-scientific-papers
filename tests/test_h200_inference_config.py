@@ -28,6 +28,8 @@ def test_h200_model_priors_and_visual_limit() -> None:
         assert settings[section]["runtime"]["vllm"]["max_num_seqs"] == expected
         assert settings[section]["runtime"]["vllm"]["tensor_parallel_size"] == 1
     judge = settings_for("judge_queries")["visual_query"]["judgement"]
+    assert judge["batch_size"] == 64
+    assert settings_for("judge_queries", "visual_query.judgement.batch_size=8")["visual_query"]["judgement"]["batch_size"] == 8
     assert judge["runtime"]["vllm"]["max_num_seqs"] == 64
     assert judge["runtime"]["vllm"]["dtype"] == "bfloat16"
     assert settings_for("describe_figures")["visual_descriptions"]["image"]["max_visual_tokens"] == 768

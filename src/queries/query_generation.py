@@ -40,7 +40,7 @@ from inference.base import ordered_results
 from inference import GenerationRequest, InferenceBackend, load_backend
 
 
-QueryMode = Literal["visual-only", "visual-and-text"]
+QueryMode = Literal["visual-and-text"]
 DEFAULT_PROMPT = Path("prompts/query_generation.v1.txt")
 DEFAULT_JUDGEMENT_PROMPT = Path("prompts/query_judgement.v1.txt")
 DEFAULT_VISUAL_INTERPRETATIONS = "qwen3_vl_figure_description"
@@ -181,6 +181,9 @@ def _generate_query_collections_from_preprocessed(
     *,
     limit: int | None = None,
 ) -> Path:
+    for mode in config.modes:
+        if mode != "visual-and-text":
+            raise ValueError(f"Unsupported query mode: {mode}")
     papers = [_limit_paper_images(paper, config.max_images) for paper in read_preprocessed_papers(config.dataset)]
     components_by_paper = _components_by_paper(
         config.dataset,
@@ -203,7 +206,7 @@ def _generate_query_collections_from_preprocessed(
         root.mkdir(parents=True, exist_ok=True)
         root_query_path = config.clues_dir / domain / "queries.jsonl"
         query_keys = _read_existing_query_keys(root_query_path)
-        for mode in sorted(config.modes, key=lambda value: value != "visual-and-text"):
+        for mode in config.modes:
             collection_dir = root / mode.replace("-", "_")
             collection_dir.mkdir(parents=True, exist_ok=True)
             collection_query_path = collection_dir / "queries.jsonl"
@@ -574,8 +577,6 @@ def _components_by_paper(
 def _has_required_modalities(selected: list[MemoryComponent], mode: QueryMode) -> bool:
     has_visual = any(component.kind == "visual" for component in selected)
     has_textual = any(component.kind == "textual" for component in selected)
-    if mode == "visual-only":
-        return has_visual
     return has_visual and has_textual
 
 
@@ -628,8 +629,6 @@ def select_components(
 ) -> list[MemoryComponent]:
     visual = [component for component in components if component.kind == "visual"]
     textual = [component for component in components if component.kind == "textual"]
-    if mode == "visual-only":
-        return visual
     return textual + visual
 
 
@@ -646,11 +645,12 @@ def load_query_generator(config: QueryGenerationConfig) -> InferenceBackend | No
 def load_query_judge(config: QueryGenerationConfig) -> InferenceBackend | None:
     if not config.judge_queries:
         return None
-    print(f"Loading query judgement backend: {config.judgement_model_provider}")
-    print(f"Loading query judgement model: {config.judgement_model}")
+    print(f"Loading query judgement backend: {config.judgement_model_provider}", flush=True)
+    print(f"Loading query judgement model: {config.judgement_model}", flush=True)
     runtime = config.judgement_runtime or ({} if config.judgement_model_provider == "vllm" else {"device_map": config.judgement_device_map,
                                            "dtype": config.judgement_dtype,
                                            "attn_implementation": config.judgement_attn_implementation})
+    print(f"Query judgement runtime: {json.dumps(runtime, sort_keys=True)}", flush=True)
     return load_backend(config.judgement_model_provider, config.judgement_model, runtime=runtime)
 
 
@@ -726,7 +726,6 @@ def format_judgement_prompt(
     paper_text = read_preprocessed_markdown(paper)
     figures_text = format_figures_for_judgement(paper)
     replacements = {
-        "{visual_only | visual_text}": "visual_only" if mode == "visual-only" else "visual_text",
         "{selected_cues}": selected_cues,
         "{paper_text}": paper_text,
         "{figures}": figures_text,
@@ -961,7 +960,7 @@ def _validate_config(config: QueryGenerationConfig) -> None:
         if not config.split_index.exists():
             raise FileNotFoundError(f"Split index does not exist: {config.split_index}")
     for mode in config.modes:
-        if mode not in ("visual-only", "visual-and-text"):
+        if mode != "visual-and-text":
             raise ValueError(f"Unsupported query mode: {mode}")
     if not config.prompt.exists():
         raise FileNotFoundError(f"Prompt template does not exist: {config.prompt}")

@@ -52,7 +52,7 @@ def matching_paper_id(path: PurePosixPath, queries: dict[str, list[dict]]) -> st
 def load_queries(root: Path, dataset: str) -> dict[str, list[dict]]:
     by_paper: dict[str, list[dict]] = defaultdict(list)
     collection = root / "query_collections" / dataset / "query_generation_test"
-    for query_file in sorted(collection.glob("*/queries.jsonl")):
+    for query_file in sorted(collection.glob("visual_and_text/queries.jsonl")):
         for line_number, line in enumerate(query_file.read_text(encoding="utf-8").splitlines(), 1):
             if not line.strip():
                 continue
@@ -78,7 +78,7 @@ def download_small_files(root: Path, repo_id: str) -> Path:
     return Path(snapshot_download(
         repo_id=repo_id,
         repo_type="dataset",
-        allow_patterns=["splits/pdf_dataset_split.json", "query_collections/*/query_generation_test/*/queries.jsonl"],
+        allow_patterns=["splits/pdf_dataset_split.json", "query_collections/*/query_generation_test/visual_and_text/queries.jsonl"],
     ))
 
 
@@ -104,7 +104,7 @@ def main() -> int:
     split_path = local_root / "splits/pdf_dataset_split.json"
     query_roots = [local_root]
     if not args.offline and (not split_path.is_file() or any(
-        not list((local_root / "query_collections" / dataset / "query_generation_test").glob("*/queries.jsonl"))
+        not list((local_root / "query_collections" / dataset / "query_generation_test").glob("visual_and_text/queries.jsonl"))
         for dataset in DATASETS
     )):
         query_roots.append(download_small_files(local_root, args.repo_id))
@@ -117,7 +117,7 @@ def main() -> int:
     selected = []
     for dataset in DATASETS:
         root = next((root for root in query_roots if list(
-            (root / "query_collections" / dataset / "query_generation_test").glob("*/queries.jsonl")
+            (root / "query_collections" / dataset / "query_generation_test").glob("visual_and_text/queries.jsonl")
         )), None)
         if root is None:
             raise FileNotFoundError(f"Missing test queries for {dataset}")
