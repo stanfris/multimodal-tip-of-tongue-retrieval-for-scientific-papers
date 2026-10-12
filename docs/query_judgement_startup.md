@@ -1,5 +1,78 @@
 # Query judgement startup investigation
 
+## Stall at `Using V2 Model Runner`
+
+The supplied cluster excerpt stops after distributed initialization and runner
+selection, before any weight-loading message. This narrows the investigation to
+worker memory setup, runner imports/construction, or the transition to the model
+loader. It does not establish a particular deadlock. The configuration dump's
+CUDA graph sizes are planned settings, not evidence that graph capture has begun.
+In [vLLM 0.21's worker source](https://github.com/vllm-project/vllm/blob/v0.21.0/vllm/v1/worker/gpu_worker.py),
+runner selection precedes runner construction and `load_model`; profiling and
+graph capture follow weight loading. The installed cluster version must be
+checked before assuming its implementation is identical.
+
+Try the interactive diagnostic wrapper from the repository root on the login
+node:
+
+```bash
+scripts/query_generation/interactive_judgements.sh session
+```
+
+It requests one GPU using the repository's PBS H200 resource defaults. When the
+shell opens, change to the repository using the command printed by the script.
+Then run:
+
+```bash
+scripts/query_generation/interactive_judgements.sh probe 2>&1 | tee /tmp/judge-startup.log
+scripts/query_generation/interactive_judgements.sh run
+```
+
+The probe reports package versions, checks a small CUDA allocation, times vLLM
+import, loads Gemma, and generates 16 tokens without reading the dataset. It
+defaults to the earlier runner (`VLLM_USE_V2_MODEL_RUNNER=0`), eager execution,
+one sequence, a 32K context, and a one-image allowance. It keeps the engine in
+process (`VLLM_ENABLE_V1_MULTIPROCESSING=0`) so Python stack traces every 120
+seconds can show where startup is waiting. These switches are documented in
+[vLLM's environment definitions](https://github.com/vllm-project/vllm/blob/v0.21.0/vllm/envs.py).
+Stack traces diagnose waits; they do not terminate the process. Ctrl-C stops it.
+The one-image probe tests basic engine startup, not the full multimodal workload.
+
+Compare the V2 runner with all other probe settings held fixed:
+
+```bash
+VLLM_USE_V2_MODEL_RUNNER=1 scripts/query_generation/interactive_judgements.sh probe
+```
+
+If only V2 stalls, the runner path is implicated. If both stall, the stack
+identifies whether to investigate CUDA/driver calls, optional kernel imports/JIT,
+or shared-filesystem/cache access. If the probe succeeds but the pipeline stalls,
+compare the larger image allowance, token budget, context, and multiprocessing.
+To test multiprocessing alone:
+
+```bash
+VLLM_ENABLE_V1_MULTIPROCESSING=1 scripts/query_generation/interactive_judgements.sh probe
+```
+
+In that mode, periodic traces only show the parent, not the separate engine.
+
+`run` executes locally on the allocated node with the H200 profile; it does not
+submit another PBS job. It judges two pending queries with batch size one and
+eager execution, retaining the pipeline's image cap and full context. Override
+Hydra settings at the end, for example `run stage.limit=null` for all pending
+judgements, or `run model.provider=transformers visual_query.judgement.provider=transformers`
+to compare backends. Both provider overrides are necessary because the shared
+visual-query defaults overwrite the stage's judge-provider selection. These runs
+write normal judgement outputs and use normal resume behavior. Set `HF_HOME`,
+`VTT_DATA_ROOT`, or `VTT_CACHE_ROOT` if the cluster uses different paths. The wrapper
+preserves the original saved token location via `HF_TOKEN_PATH` before changing
+the model cache; set it explicitly if your saved token uses a custom path.
+
+Shell syntax, CLI help, local Hydra dry runs, and wrapper dispatch are checked
+locally. GPU startup remains unverified because this workspace has no cluster GPU.
+
+## Earlier dataset-path investigation
+
 The code contains unnecessary filesystem work and a mismatch in image selection,
 but the dominant delay cannot be measured from the available logs: the checked-in
 query generation and judgement log files are empty. No GPU inference was launched

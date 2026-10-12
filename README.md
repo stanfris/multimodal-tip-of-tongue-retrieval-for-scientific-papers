@@ -243,6 +243,11 @@ scripts/query_generation/judge_train_queries.sh \
 
 The explicit judge provider override is required because the shared visual-query defaults overwrite the stage's provider selection. Passing `HF_TOKEN_PATH` lets the PBS worker use your saved login even when the launcher changes `HF_HOME`; it also avoids writing the token itself into the saved configuration or job script. Append `stage.limit=2` for an initial two-query smoke test.
 
+For a stall before model loading, use `scripts/query_generation/interactive_judgements.sh session`
+to request an interactive GPU shell, then run the same script with `probe` to
+isolate engine startup or `run` to judge two pending queries. See
+[startup diagnostics](docs/query_judgement_startup.md) for runner comparisons and stack traces.
+
 Standalone query judgements are appended to `data/query_collections/<domain>/query_generation_train/visual_and_text/query_judgements.jsonl` beside `queries.jsonl` (use `query_generation_test` for the test split). The stage prints the resolved input/output paths before loading the model, announces model readiness and each inference batch, and reports progress only after a judgement has been flushed and synced to disk, using the same progress style as query generation. Existing query IDs are skipped on reruns. The H200 judgement batch size defaults to 64; override it with `visual_query.judgement.batch_size=NUMBER`. Results are saved after each batch returns. No judgements can be written while the model is still initializing.
 
 Query generation considers at most the first 15 images in each paper. Set `visual_query.selection.max_images=NUMBER` to change this cap; it also applies to clue coverage and images sent to the optional query judge.
