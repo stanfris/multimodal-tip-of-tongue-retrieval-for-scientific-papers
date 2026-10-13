@@ -19,7 +19,7 @@ class VLLMBackend:
 
         self.sampling_params = SamplingParams
         kwargs = {key: value for key, value in runtime.items() if value is not None}
-        if ("vl" in model.lower() or "gemma-3" in model.lower()) and "limit_mm_per_prompt" not in kwargs:
+        if any(name in model.lower() for name in ("vl", "gemma-3", "gemma-4")) and "limit_mm_per_prompt" not in kwargs:
             kwargs["limit_mm_per_prompt"] = {"image": 16}
         mm_kwargs = processor_image_kwargs(model, image)
         if mm_kwargs:

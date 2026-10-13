@@ -36,7 +36,7 @@ launcher:
   visual_batch_size: 64
   text_batch_size: 256
   query_batch_size: 128
-  judgement_batch_size: 64
+  judgement_batch_size: 16
   vllm:
     tensor_parallel_size: 1
     gpu_memory_utilization: 0.92
@@ -46,6 +46,7 @@ launcher:
       Qwen/Qwen3-4B: 256
       microsoft/phi-4: 128
       google/gemma-3-27b-it: 64
+      google/gemma-4-12B-it: 16
     max_num_batched_tokens: 16384
     dtype: bfloat16
     kv_cache_dtype: auto

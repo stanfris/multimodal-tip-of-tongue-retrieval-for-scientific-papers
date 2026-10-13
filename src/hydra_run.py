@@ -60,7 +60,8 @@ def managed_settings(config: dict[str, Any], data_root: Path, repo_root: Path) -
     model_limits = vllm.pop("model_max_num_seqs", {})
     if vllm.get("max_num_seqs") is None and config["model"]["name"] in model_limits:
         vllm["max_num_seqs"] = model_limits[config["model"]["name"]]
-    if config["model"]["name"] not in {"Qwen/Qwen3-VL-4B-Instruct", "google/gemma-3-27b-it"}:
+    multimodal_models = {"Qwen/Qwen3-VL-4B-Instruct", "google/gemma-3-27b-it", "google/gemma-4-12B-it"}
+    if config["model"]["name"] not in multimodal_models:
         vllm.pop("limit_mm_per_prompt", None)
     settings["visual_descriptions"]["runtime"] = {"transformers": runtime, "vllm": vllm}
     settings["textual_descriptions"]["runtime"] = {"transformers": runtime, "vllm": vllm}
@@ -69,7 +70,7 @@ def managed_settings(config: dict[str, Any], data_root: Path, repo_root: Path) -
     judgement_model = settings["visual_query"]["judgement"].get("model")
     if launcher.get("vllm", {}).get("max_num_seqs") is None and judgement_model in model_limits:
         judge_vllm["max_num_seqs"] = model_limits[judgement_model]
-    if judgement_model in {"Qwen/Qwen3-VL-4B-Instruct", "google/gemma-3-27b-it"}:
+    if judgement_model in multimodal_models:
         judge_vllm["limit_mm_per_prompt"] = launcher.get("vllm", {}).get("limit_mm_per_prompt", {"image": 16})
     settings["visual_query"]["judgement"]["runtime"] = {"transformers": runtime, "vllm": judge_vllm}
     return settings
@@ -318,6 +319,11 @@ def run_mineru_job(plan: dict[str, Any]) -> None:
 def execute_stage(plan: dict[str, Any]) -> None:
     """Invoke normal Python functions with a resolved settings file or typed arguments."""
     repo_root = Path(plan["repo_root"])
+    # Local runs need the same configured environment as scheduler workers.
+    for key, value in (plan["launcher"].get("environment") or {}).items():
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key):
+            raise ValueError(f"Invalid launcher environment variable name: {key!r}")
+        os.environ[key] = str(value)
     os.environ["HF_HOME"] = str(absolute(plan["launcher"]["model_cache"], repo_root))
     os.environ["XDG_CACHE_HOME"] = str(absolute(plan["launcher"]["cache_root"], repo_root))
 

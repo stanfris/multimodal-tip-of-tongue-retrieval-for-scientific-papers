@@ -1,0 +1,5 @@
+provider: vllm
+name: google/gemma-4-12B-it
+device_map: ${launcher.device_map}
+dtype: ${launcher.dtype}
+attn_implementation: ${launcher.attn_implementation}

@@ -11,7 +11,7 @@ import time
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--model", default="google/gemma-3-27b-it")
+    parser.add_argument("--model", default="google/gemma-4-12B-it")
     parser.add_argument("--max-model-len", type=int, default=32768)
     parser.add_argument("--stack-interval", type=int, default=120)
     args = parser.parse_args()

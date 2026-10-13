@@ -20,7 +20,8 @@ def test_request_order_and_ids() -> None:
         ordered_results(requests, [GenerationResult("a", "A")])
 
 
-def test_vllm_text_and_multimodal_batch(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+@pytest.mark.parametrize("model", ["Qwen/Qwen3-VL-4B-Instruct", "google/gemma-4-12B-it"])
+def test_vllm_text_and_multimodal_batch(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, model: str) -> None:
     from PIL import Image
 
     calls = []
@@ -49,7 +50,7 @@ def test_vllm_text_and_multimodal_batch(monkeypatch: pytest.MonkeyPatch, tmp_pat
                        AutoTokenizer=FakeAuto))
     image_path = tmp_path / "figure.png"
     Image.new("RGB", (8, 8)).save(image_path)
-    backend = VLLMBackend("Qwen/Qwen3-VL-4B-Instruct", {"max_num_seqs": 64},
+    backend = VLLMBackend(model, {"max_num_seqs": 64},
                           {"max_visual_tokens": 768})
     requests = [GenerationRequest("text", "explain"),
                 GenerationRequest("image", "describe", images=(image_path,))]
@@ -58,7 +59,11 @@ def test_vllm_text_and_multimodal_batch(monkeypatch: pytest.MonkeyPatch, tmp_pat
     assert len(calls) == 1 and len(calls[0][0]) == 2
     assert "multi_modal_data" not in calls[0][0][0]
     assert calls[0][0][1]["multi_modal_data"]["image"].size == (8, 8)
-    assert backend.llm.kwargs["mm_processor_kwargs"]["max_pixels"] == 768 * 32 * 32
+    assert backend.llm.kwargs["limit_mm_per_prompt"] == {"image": 16}
+    if "Qwen" in model:
+        assert backend.llm.kwargs["mm_processor_kwargs"]["max_pixels"] == 768 * 32 * 32
+    else:
+        assert "mm_processor_kwargs" not in backend.llm.kwargs
     assert processor_image_kwargs("google/gemma-3-27b-it", {"max_visual_tokens": 768}) == {}
 
 
@@ -66,6 +71,33 @@ def test_missing_vllm_is_lazy_and_helpful(monkeypatch: pytest.MonkeyPatch) -> No
     monkeypatch.setitem(sys.modules, "vllm", None)
     with pytest.raises(RuntimeError, match="vllm is not installed"):
         load_backend("vllm", "Qwen/Qwen3-4B")
+
+
+def test_gemma4_transformers_uses_multimodal_loader(monkeypatch: pytest.MonkeyPatch) -> None:
+    from inference.transformers import TransformersBackend
+
+    calls = []
+    processor = SimpleNamespace(tokenizer=SimpleNamespace(pad_token="pad", padding_side="right"))
+
+    class Multimodal:
+        @staticmethod
+        def from_pretrained(model, **kwargs):
+            calls.append(model)
+            return SimpleNamespace(device="cpu")
+
+    class WrongLoader:
+        @staticmethod
+        def from_pretrained(*args, **kwargs):
+            pytest.fail("Gemma 4 must use the multimodal loader and processor")
+
+    monkeypatch.setitem(sys.modules, "transformers", SimpleNamespace(
+        AutoModelForCausalLM=WrongLoader, AutoModelForImageTextToText=WrongLoader,
+        AutoModelForMultimodalLM=Multimodal, AutoTokenizer=WrongLoader,
+        AutoProcessor=SimpleNamespace(from_pretrained=lambda model: processor)))
+    backend = TransformersBackend("google/gemma-4-12B-it", {}, {})
+    assert backend.visual
+    assert calls == ["google/gemma-4-12B-it"]
+    assert backend.processor is processor
 
 
 def test_vllm_isolates_one_failed_request(monkeypatch: pytest.MonkeyPatch) -> None:

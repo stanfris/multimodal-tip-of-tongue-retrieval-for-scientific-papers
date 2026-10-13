@@ -166,7 +166,7 @@ def test_judgement_saves_and_reports_before_next_request_and_resumes(monkeypatch
     monkeypatch.setattr(stage, "read_preprocessed_papers", lambda *args, **kwargs: [{"paper_id": "paper", "split": "train"}])
     monkeypatch.setattr(stage, "format_judgement_prompt", lambda *args: "Judge")
     args = stage.build_parser().parse_args(["--dataset", str(tmp_path), "--input-dir", str(query_dir.parent),
-                                          "--mode", "visual-and-text", "--prompt", str(prompt)])
+                                          "--mode", "visual-and-text", "--prompt", str(prompt), "--batch-size", "1"])
 
     class InterruptedBackend:
         def generate(self, requests):

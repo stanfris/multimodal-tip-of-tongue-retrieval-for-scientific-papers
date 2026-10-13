@@ -28,11 +28,17 @@ def test_h200_model_priors_and_visual_limit() -> None:
         assert settings[section]["runtime"]["vllm"]["max_num_seqs"] == expected
         assert settings[section]["runtime"]["vllm"]["tensor_parallel_size"] == 1
     judge = settings_for("judge_queries")["visual_query"]["judgement"]
-    assert judge["batch_size"] == 64
+    assert judge["batch_size"] == 16
+    assert judge["model"] == "google/gemma-4-12B-it"
     assert settings_for("judge_queries", "visual_query.judgement.batch_size=8")["visual_query"]["judgement"]["batch_size"] == 8
-    assert judge["runtime"]["vllm"]["max_num_seqs"] == 64
+    assert judge["runtime"]["vllm"]["max_num_seqs"] == 16
+    assert judge["runtime"]["vllm"]["limit_mm_per_prompt"] == {"image": 16}
     assert judge["runtime"]["vllm"]["dtype"] == "bfloat16"
     assert settings_for("describe_figures")["visual_descriptions"]["image"]["max_visual_tokens"] == 768
+    # An inline Gemma 4 judge must retain its image allowance even for a text-only generator.
+    inline = settings_for("generate_queries")["visual_query"]["judgement"]
+    assert inline["runtime"]["vllm"]["limit_mm_per_prompt"] == {"image": 16}
+    assert inline["runtime"]["vllm"]["max_num_seqs"] == 16
 
 
 def test_h200_overrides() -> None:

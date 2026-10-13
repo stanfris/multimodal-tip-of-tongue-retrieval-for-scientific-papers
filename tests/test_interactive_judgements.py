@@ -43,9 +43,14 @@ def test_interactive_dispatch(tmp_path: Path, mode: str) -> None:
         assert args[1] == str(ROOT / "scripts/query_generation/probe_judge_startup.py")
         assert actual["runner"] == actual["mp"] == "0"
     else:
-        assert "hydra_entry" in args
+        assert "-c" in args
+        assert 'runpy.run_module("hydra_entry", run_name="__main__")' in args[args.index("-c") + 1]
         assert "launcher.kind=local" in args
         assert "visual_query.judgement.provider=vllm" in args
         assert "stage.limit=2" in args
-        assert "+launcher.vllm.enforce_eager=true" in args
+        assert "++launcher.vllm.enforce_eager=true" in args
+        assert "visual_query.judgement.batch_size=16" in args
+        assert "launcher.vllm.max_num_seqs=16" in args
+        assert "++launcher.environment.VLLM_WORKER_MULTIPROC_METHOD=spawn" in args
         assert actual["runner"] == "0"
+        assert actual["mp"] == "1"

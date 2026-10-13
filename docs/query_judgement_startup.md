@@ -1,5 +1,26 @@
 # Query judgement startup investigation
 
+## Current judge configuration
+
+The judge now defaults to `google/gemma-4-12B-it`, with application batch size 16
+and H200 vLLM concurrency 16. Standalone judgement enables engine multiprocessing
+with the `spawn` start method. `submit_judgements_h200.sh` submits all pending
+queries for up to 24 hours; `interactive_judgements.sh run` retains its two-query
+diagnostic limit (append `stage.limit=null` to run all pending queries). The small
+probe remains in-process. Older Gemma 3 logs and configurations below document
+the investigation, not the current defaults. The separate multiprocessing
+diagnostic deliberately still targets Gemma 3 for reproducing that issue.
+
+Gemma 4 is recognized as multimodal by both inference backends and retains the
+16-image engine allowance. The prior 15-image selection cap remains. Saved
+judgements are skipped by query ID irrespective of model; newly written rows
+include the Gemma 4 model ID. No existing output is deleted by this switch.
+
+The Gemma 4 12B model uses `Gemma4UnifiedForConditionalGeneration`, registered in
+[vLLM 0.26's model registry](https://github.com/vllm-project/vllm/blob/v0.26.0/vllm/model_executor/models/registry.py).
+Configuration and adapter tests are run locally; actual GPU startup, batch
+memory requirements and throughput remain unverified.
+
 ## Stall at `Using V2 Model Runner`
 
 The supplied cluster excerpt stops after distributed initialization and runner
@@ -57,7 +78,9 @@ VLLM_ENABLE_V1_MULTIPROCESSING=1 scripts/query_generation/interactive_judgements
 In that mode, periodic traces only show the parent, not the separate engine.
 
 `run` executes locally on the allocated node with the H200 profile; it does not
-submit another PBS job. It judges two pending queries with batch size one and
+submit another PBS job. Like the probe, it now defaults to an in-process engine
+and prints periodic stack traces (every 120 seconds, configurable through
+`VTT_DEBUG_STACK_INTERVAL`). It judges two pending queries with batch size one and
 eager execution, retaining the pipeline's image cap and full context. Override
 Hydra settings at the end, for example `run stage.limit=null` for all pending
 judgements, or `run model.provider=transformers visual_query.judgement.provider=transformers`
@@ -170,3 +193,89 @@ index compatibility, the default 15-image cap, matching figure listings and
 attachments, full paper text preservation, and managed image-limit overrides.
 The existing backend, batching, resume, and H200 configuration tests also pass.
 GPU startup time and resulting cost savings remain unmeasured.
+
+## Follow-up cluster log: vLLM 0.26.0, earlier runner
+
+The follow-up log loads 11,000 papers in 147.2 seconds, schedules two judgements,
+and initializes an eager engine. It stops after sampler initialization, still
+before `Starting to load model`. There is no V2 runner selection message. In
+[vLLM 0.26's earlier runner](https://github.com/vllm-project/vllm/blob/v0.26.0/vllm/v1/worker/gpu_model_runner.py),
+sampler construction and subsequent runner setup precede weight loading. This
+rules out CUDA graph capture as the current waiting phase and weakens the
+earlier V2-specific hypothesis. It does not prove which operation is blocked.
+
+If the isolated probe succeeds, compare its settings with this run:
+
+| Setting | Probe | Follow-up run |
+| --- | --- | --- |
+| Engine multiprocessing | Off | On (`EngineCore pid=...`) |
+| Maximum context | 32,768 | 131,072 |
+| Batched token budget | 2,048 | 16,384 |
+| Image allowance | 1 | 16 |
+| GPU memory fraction | 0.85 | 0.92 |
+
+First retry with only multiprocessing changed, on the same GPU allocation:
+
+```bash
+VLLM_ENABLE_V1_MULTIPROCESSING=0 scripts/query_generation/interactive_judgements.sh run
+```
+
+The updated wrapper does this by default and adds periodic traces. If it still
+stalls, compare smaller runtime budgets while preserving the 15 attached images:
+
+```bash
+VLLM_ENABLE_V1_MULTIPROCESSING=0 scripts/query_generation/interactive_judgements.sh run \
+  ++launcher.vllm.max_model_len=32768 \
+  launcher.vllm.max_num_batched_tokens=2048 \
+  launcher.vllm.gpu_memory_utilization=0.85
+```
+
+The 32K context is a diagnostic limit: oversized full-paper/image prompts may
+fail at inference time. This does not truncate paper text or reduce attached
+images. Investigate the printed stack before adopting any throughput settings.
+
+## Multiprocessing root-cause audit
+
+The successful in-process run establishes a workaround, not the exact blocking
+operation. A more specific candidate is fork safety during multimodal CPU
+initialization. The repository uses the same `VLLMBackend` constructor for query
+generation and judgement. Dataset loading contains no explicit Torch/CUDA
+initialization. Loading papers before loading the judge is therefore not, by
+itself, evidence of a CUDA-before-fork error.
+
+In vLLM 0.26, `LLMEngine` creates its renderer before starting EngineCore. For
+multimodal models the renderer constructs processors inside
+`set_default_torch_num_threads`. The engine's earlier runner later constructs
+`MultiModalBudget`, again changing Torch thread settings, after the sampler log
+but before the weight-loading log. A fork can inherit native runtime/lock state;
+spawn starts a new interpreter. This is consistent with the logs, but a stack
+trace or controlled start-method comparison is required to confirm it.
+
+Sources: [engine initialization](https://github.com/vllm-project/vllm/blob/v0.26.0/vllm/v1/engine/llm_engine.py),
+[renderer](https://github.com/vllm-project/vllm/blob/v0.26.0/vllm/renderers/base.py),
+[multimodal budget](https://github.com/vllm-project/vllm/blob/v0.26.0/vllm/multimodal/encoder_budget.py),
+[process context selection](https://github.com/vllm-project/vllm/blob/v0.26.0/vllm/utils/system_utils.py).
+
+Phi-4 and Qwen text generation skip multimodal processor initialization. Qwen-VL
+uses a different processor/model path, so it is not proof that Gemma has the same
+startup behavior. MinerU uses a separate environment. Previous successful logs
+are needed to compare the actual provider, package versions and process method.
+
+The original probe also initializes CUDA before importing vLLM. If multiprocessing
+is enabled for that probe, vLLM automatically forces spawn; its successful startup
+would not establish that fork works. The new matched diagnostic avoids this:
+
+```bash
+PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}" \
+  .venv/bin/python -u scripts/query_generation/diagnose_judge_multiprocessing.py --mode spawn
+PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}" \
+  .venv/bin/python -u scripts/query_generation/diagnose_judge_multiprocessing.py --mode fork
+```
+
+Run sequentially on the same otherwise idle GPU, with the same `HF_HOME` used by
+the pipeline. The helper reproduces engine budgets and arms traces in parent and
+children. A startup failure remains visible as an exception; a hang emits traces
+every two minutes. Stop a hung run before starting another. If spawn works and
+fork hangs in Torch thread/processor initialization, keep multiprocessing enabled
+and set `VLLM_WORKER_MULTIPROC_METHOD=spawn` instead of disabling EngineCore
+multiprocessing entirely. GPU confirmation remains outstanding.

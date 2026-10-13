@@ -15,9 +15,9 @@ from inference.base import ordered_results
 
 
 MODELS = {"visual": "Qwen/Qwen3-VL-4B-Instruct", "text": "Qwen/Qwen3-4B",
-          "query": "microsoft/phi-4", "judge": "google/gemma-3-27b-it"}
+          "query": "microsoft/phi-4", "judge": "google/gemma-4-12B-it"}
 SEQS = {"visual": [32, 64, 128], "text": [128, 256, 512],
-        "query": [64, 128, 256], "judge": [32, 64, 128]}
+        "query": [64, 128, 256], "judge": [4, 8, 16]}
 
 
 def representative_requests(stage: str, dataset: Path, clues_dir: Path, count: int) -> list[GenerationRequest]:

@@ -1,11 +1,16 @@
 # @package _global_
 
 defaults:
-  - override /model: gemma3_judge
+  - override /model: gemma4_judge
 
 stage:
   name: judge_queries
   limit: null
+launcher:
+  environment:
+    VLLM_ENABLE_V1_MULTIPROCESSING: '1'
+    VLLM_WORKER_MULTIPROC_METHOD: spawn
+    VLLM_USE_V2_MODEL_RUNNER: '0'
 visual_query:
   judgement:
     model: ${model.name}

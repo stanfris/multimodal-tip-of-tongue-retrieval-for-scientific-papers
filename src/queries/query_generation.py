@@ -54,7 +54,7 @@ DEFAULT_MODELS = {
     "transformers": "Qwen/Qwen3-4B",
     "vllm": "microsoft/phi-4",
 }
-DEFAULT_JUDGEMENT_MODEL = "google/gemma-3-27b-it"
+DEFAULT_JUDGEMENT_MODEL = "google/gemma-4-12B-it"
 
 
 @dataclass(frozen=True)
@@ -83,14 +83,14 @@ class QueryGenerationConfig:
     judgement_prompt: Path = DEFAULT_JUDGEMENT_PROMPT
     judgement_prompt_id: str = "query_judgement"
     judgement_prompt_version: str = "v1"
-    judgement_model_provider: str = "transformers"
+    judgement_model_provider: str = "vllm"
     judgement_model: str = DEFAULT_JUDGEMENT_MODEL
     judgement_temperature: float = 0.0
     judgement_max_tokens: int = 900
     judgement_device_map: str = "auto"
     judgement_dtype: str = "bfloat16"
     judgement_attn_implementation: str | None = "sdpa"
-    judgement_batch_size: int = 1
+    judgement_batch_size: int = 16
     judgement_runtime: dict[str, Any] = field(default_factory=dict)
     modes: tuple[QueryMode, ...] = ("visual-and-text",)
     seed: int = 13
@@ -889,15 +889,15 @@ def _config_from_yaml(path: Path, *, query_set: ManagedSet = "train") -> QueryGe
         judgement_prompt=resolve_path(judgement.get("template", DEFAULT_JUDGEMENT_PROMPT), config_dir),
         judgement_prompt_id=judgement.get("name", "query_judgement"),
         judgement_prompt_version=judgement.get("version", "v1"),
-        judgement_model_provider=judgement.get("provider", "transformers"),
+        judgement_model_provider=judgement.get("provider", "vllm"),
         judgement_model=judgement.get("model", DEFAULT_JUDGEMENT_MODEL),
         judgement_temperature=float(judgement.get("temperature", 0.0)),
         judgement_max_tokens=int(judgement.get("max_tokens", 900)),
         judgement_device_map=judgement.get("device_map", "auto"),
         judgement_dtype=judgement.get("dtype", "bfloat16"),
         judgement_attn_implementation=judgement.get("attn_implementation", "sdpa"),
-        judgement_batch_size=int(judgement.get("batch_size", 1)),
-        judgement_runtime=(judgement.get("runtime") or {}).get(judgement.get("provider", "transformers"), {}),
+        judgement_batch_size=int(judgement.get("batch_size", 16)),
+        judgement_runtime=(judgement.get("runtime") or {}).get(judgement.get("provider", "vllm"), {}),
         modes=modes,
         seed=int(visual_query.get("seed", 13)),
         visual_component_budget=int(

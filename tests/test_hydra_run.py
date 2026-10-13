@@ -43,7 +43,11 @@ def test_stage_default_models_and_explicit_override() -> None:
     assert config("stage=generate_queries")["visual_query"]["selection"]["modes"] == ["visual-and-text"]
     assert config("stage=generate_queries")["visual_query"]["selection"]["max_images"] == 15
     assert config("stage=describe_textual_clues")["model"]["name"] == "Qwen/Qwen3-4B"
-    assert config("stage=judge_queries")["visual_query"]["judgement"]["model"] == "google/gemma-3-27b-it"
+    judge = config("stage=judge_queries")
+    assert judge["visual_query"]["judgement"]["model"] == "google/gemma-4-12B-it"
+    assert judge["visual_query"]["judgement"]["provider"] == "vllm"
+    assert judge["launcher"]["environment"]["VLLM_ENABLE_V1_MULTIPROCESSING"] == "1"
+    assert judge["launcher"]["environment"]["VLLM_WORKER_MULTIPROC_METHOD"] == "spawn"
     assert config("stage=judge_queries")["dataset"]["query_output"].endswith("/query_collections")
     assert config("stage=describe_figures", "model=qwen3_text")["model"]["name"] == "Qwen/Qwen3-4B"
 

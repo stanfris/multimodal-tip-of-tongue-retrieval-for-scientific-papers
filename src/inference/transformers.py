@@ -16,9 +16,9 @@ class TransformersBackend:
         self.image = image
         kwargs = {key: runtime[key] for key in ("device_map", "dtype", "attn_implementation")
                   if runtime.get(key) is not None}
-        self.visual = "vl" in model.lower() or "gemma-3" in model.lower()
+        self.visual = any(name in model.lower() for name in ("vl", "gemma-3", "gemma-4"))
         if self.visual:
-            if "gemma-3" in model.lower():
+            if "gemma-3" in model.lower() or "gemma-4" in model.lower():
                 try:
                     self.model = AutoModelForMultimodalLM.from_pretrained(model, **kwargs)
                 except (OSError, ValueError):
@@ -85,6 +85,7 @@ class TransformersBackend:
                     conversations.append([{"role": "user", "content": content}])
                 inputs = self.processor.apply_chat_template(
                     conversations, tokenize=True, add_generation_prompt=True,
+                    enable_thinking=requests[0].thinking,
                     return_dict=True, return_tensors="pt", padding=True)
             else:
                 prompts = [chat_prompt(self.processor, request.prompt, thinking=request.thinking)
