@@ -28,7 +28,8 @@ def test_h200_model_priors_and_visual_limit() -> None:
         assert settings[section]["runtime"]["vllm"]["max_num_seqs"] == expected
         assert settings[section]["runtime"]["vllm"]["tensor_parallel_size"] == 1
     judge = settings_for("judge_queries")["visual_query"]["judgement"]
-    assert judge["batch_size"] == 16
+    assert judge["batch_size"] == 32
+    assert judge["runtime"]["vllm"]["image_load_workers"] == 4
     assert judge["model"] == "google/gemma-4-12B-it"
     assert settings_for("judge_queries", "visual_query.judgement.batch_size=8")["visual_query"]["judgement"]["batch_size"] == 8
     assert judge["runtime"]["vllm"]["max_num_seqs"] == 16
