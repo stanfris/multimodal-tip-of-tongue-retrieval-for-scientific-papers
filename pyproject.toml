@@ -17,7 +17,9 @@ dependencies = [
     "pyarrow>=19.0.0",
     "pillow>=12.3.0",
     "pyyaml>=6.0.0",
-    "transformers>=5.0",
+    # vLLM 0.26 reads Gemma 4 head_dim globally. Transformers 5.15+ rejects
+    # that access for heterogeneous per-layer configs (vllm#49797).
+    "transformers==5.14.0",
     "torch",
     "accelerate",
     "torchvision",

@@ -229,6 +229,19 @@ scripts/query_generation/generate_queries.sh split=train launcher=pbs_h200 model
 
 The standalone judge uses `google/gemma-4-12B-it` with vLLM. Run the following on the cluster where `uv run hf auth whoami` confirms your login. vLLM must be installed in the main `.venv`, and the saved token file must be accessible from the compute node.
 
+The main environment pins Transformers to 5.14.0 for compatibility with vLLM
+0.26 and Gemma 4's different attention head sizes. Transformers 5.15+ rejects
+the older vLLM code's global `head_dim` lookup. To fix an existing cluster
+environment without replacing its GPU packages, run:
+
+```bash
+uv pip install --python .venv/bin/python 'transformers==5.14.0'
+```
+
+The dependency pin and lockfile preserve this version for future installs. See
+[the upstream compatibility fix](https://github.com/vllm-project/vllm/pull/49797)
+before moving to a newer vLLM/Transformers pair.
+
 ```bash
 HF_TOKEN_FILE="$(uv run python -c 'from huggingface_hub.constants import HF_TOKEN_PATH; print(HF_TOKEN_PATH)')"
 

@@ -21,6 +21,28 @@ The Gemma 4 12B model uses `Gemma4UnifiedForConditionalGeneration`, registered i
 Configuration and adapter tests are run locally; actual GPU startup, batch
 memory requirements and throughput remain unverified.
 
+The later `AmbiguousGlobalPerLayerAttributeError` traceback establishes a
+separate configuration incompatibility before worker creation: older vLLM reads
+`hf_text_config.head_dim` globally, but Transformers 5.15+ makes that read an
+error for Gemma 4's heterogeneous layers. The project now pins Transformers
+5.14.0, which includes Gemma 4 Unified while preserving the older configuration
+API. The lockfile also selects its compatible Tokenizers dependency. This fixes
+the configuration read without setting
+`allow_global_per_layer_attribute_access=True` or modifying layer dimensions.
+The upstream multi-file fix is
+[vllm#49797](https://github.com/vllm-project/vllm/pull/49797).
+
+For an existing cluster environment:
+
+```bash
+uv pip install --python .venv/bin/python 'transformers==5.14.0'
+```
+
+Then rerun the ordinary judgement wrapper. The configuration API regression is
+verified with the pinned packages in a temporary environment; full GPU inference
+is still unverified locally. Batch size 16 and spawned multiprocessing remain
+configured; neither causes this particular exception.
+
 ## Stall at `Using V2 Model Runner`
 
 The supplied cluster excerpt stops after distributed initialization and runner
