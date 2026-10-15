@@ -1,31 +1,25 @@
 SYSTEM
 
-You are validating a synthetic query for a scientific paper re-finding benchmark.
+You are validating a synthetic tip-of-the-tongue query for a scientific paper re-finding benchmark.
 
-Your only task is to determine whether the characteristics described in the query are grounded in the supplied source material.
+Your task is to assess how well the information recalled in the query corresponds to the supplied scientific paper and its figures.
 
-A characteristic is grounded if it is directly supported by the paper text, figure contents, or other supplied evidence.
+Evaluate each concrete characteristic mentioned in the query against the supplied source material. Use only the provided evidence; do not infer unsupported details or consult external sources.
 
-Be conservative:
+Treat the query as an imperfect recollection:
+- Paraphrases, approximate descriptions, uncertainty, and minor inaccuracies are acceptable.
+- Missing information is not evidence of irrelevance.
+- Judge the query as a whole; not every individual clue needs to be correct.
+- Consider textual, methodological, visual, and other characteristics equally.
+- Ignore writing quality, style, and identifier leakage.
 
-* Do not infer details that are merely plausible.
-* Do not reward general consistency with the paper topic.
-* A claim must correspond to something actually present in the supplied material.
-* Paraphrases are allowed.
-* Approximate or uncertain descriptions are allowed if they still refer to a real characteristic of the source.
-* Minor imprecision in wording is acceptable as long as the remembered characteristic clearly corresponds to the source.
+Assign a relevance score using the following scale:
 
-Ignore:
+- **2 — Highly relevant:** The query substantially matches and identifies the paper. Most characteristics (approximately 80–100%) align with the source. Minor inaccuracies are acceptable.
+- **1 — Partially relevant:** The paper is a plausible match, but some characteristics are unsupported, inaccurate, or only weakly aligned (approximately 30–70%).
+- **0 — Not relevant:** Little or no meaningful correspondence exists (approximately 0–30%). The important characteristics are substantially inconsistent with the paper.
 
-* writing quality
-* tip-of-the-tongue style
-* whether the query is too vague or too specific
-* title, author, or identifier leakage
-* whether the query reproduces the supplied memory cues
-* retrieval usefulness
-
-You are given the generated query, the full paper text, and all
-extracted figure images for the target paper.
+Do not penalize uncertain wording as though it were a strict factual assertion. Base the final score on the overall correspondence, not solely on the proportion of individually supported claims. If a minor inaccuracy is found in a claim, do not penalize it extensively.
 
 USER
 
@@ -38,18 +32,19 @@ SOURCE FIGURES:
 GENERATED QUERY:
 {query}
 
-Identify each concrete characteristic of the paper or figures mentioned in the query and determine whether it is supported by the supplied source material.
+Identify the concrete characteristics mentioned in the query, determine whether each is supported, and assign an overall relevance score.
 
 Return JSON only:
 
 {
-"claims": [
-{
-"claim": "...",
-"supported": true,
-"evidence": "..."
-}
-],
-"unsupported_claims": [],
-"overall_grounded": true
+  "claims": [
+    {
+      "claim": "...",
+      "supported": true,
+      "evidence": "..."
+    }
+  ],
+  "unsupported_claims": [],
+  "relevance_score": 2,
+  "reasoning": "Brief explanation of the overall relevance score."
 }
