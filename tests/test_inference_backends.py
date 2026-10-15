@@ -50,7 +50,7 @@ def test_vllm_text_and_multimodal_batch(monkeypatch: pytest.MonkeyPatch, tmp_pat
                        AutoTokenizer=FakeAuto))
     image_path = tmp_path / "figure.png"
     Image.new("RGB", (8, 8)).save(image_path)
-    backend = VLLMBackend(model, {"max_num_seqs": 64, "image_load_workers": 2},
+    backend = VLLMBackend(model, {"max_num_seqs": 64},
                           {"max_visual_tokens": 768})
     requests = [GenerationRequest("text", "explain"),
                 GenerationRequest("image", "describe", images=(image_path,))]
@@ -60,8 +60,6 @@ def test_vllm_text_and_multimodal_batch(monkeypatch: pytest.MonkeyPatch, tmp_pat
     assert "multi_modal_data" not in calls[0][0][0]
     assert calls[0][0][1]["multi_modal_data"]["image"].size == (8, 8)
     assert backend.llm.kwargs["limit_mm_per_prompt"] == {"image": 16}
-    assert backend.image_load_workers == 2
-    assert "image_load_workers" not in backend.llm.kwargs
     if "Qwen" in model:
         assert backend.llm.kwargs["mm_processor_kwargs"]["max_pixels"] == 768 * 32 * 32
     else:

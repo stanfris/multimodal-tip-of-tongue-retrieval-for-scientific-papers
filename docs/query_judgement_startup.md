@@ -2,14 +2,8 @@
 
 ## Current judge configuration
 
-The judge now defaults to `google/gemma-4-12B-it`, with H200 application batch size 32
-and vLLM concurrency 16. Standalone vLLM judgement decodes images with four
-worker threads and prepares at most one window ahead during inference. Set
-`visual_query.judgement.batch_size` to change the window, or
-`launcher.vllm.image_load_workers` to change the decoding worker count.
-Current and prefetched windows both consume CPU image memory. These throughput
-changes have local concurrency and cleanup coverage; GPU gains remain unmeasured.
-Standalone judgement enables engine multiprocessing
+The judge now defaults to `google/gemma-4-12B-it`, with application batch size 16
+and H200 vLLM concurrency 16. Standalone judgement enables engine multiprocessing
 with the `spawn` start method. `submit_judgements_h200.sh` submits all pending
 queries for up to 24 hours; `interactive_judgements.sh run` retains its two-query
 diagnostic limit (append `stage.limit=null` to run all pending queries). The small

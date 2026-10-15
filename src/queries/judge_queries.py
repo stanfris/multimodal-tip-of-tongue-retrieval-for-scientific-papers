@@ -189,36 +189,25 @@ def main(args: argparse.Namespace | None = None) -> int:
             if not pending:
                 continue
             reporter = QueryProgress(total=len(pending), description=f"Judging {mode} paper queries")
-            results_batches = None
             try:
                 batches = batched(pending, config.judgement_batch_size)
-                if loaded_judge is not None:
-                    def request_batches():
-                        for batch in batches:
-                            prepared_started = time.monotonic()
-                            requests = [GenerationRequest(query_id,
-                                format_judgement_prompt(template, mode, paper, selected, str(row.get("query") or "")),
-                                images=tuple(paper_image_paths(paper)), max_tokens=config.judgement_max_tokens,
-                                temperature=config.judgement_temperature)
-                                for row, query_id, _, paper, selected in batch]
-                            print(f"Judgement batch prepared in {time.monotonic() - prepared_started:.1f}s: "
-                                  f"prompt_chars={sum(len(request.prompt) for request in requests)} "
-                                  f"images={sum(len(request.images) for request in requests)}; "
-                                  "starting backend image processing and inference", flush=True)
-                            yield requests
-
-                    generate_batches = getattr(loaded_judge, "generate_batches", None)
-                    results_batches = (generate_batches(request_batches()) if callable(generate_batches) else
-                                       (loaded_judge.generate(requests) for requests in request_batches()))
                 for batch_index, batch in enumerate(batches, start=1):
                     print(f"Judging {mode}: starting batch {batch_index}/{len(batches)} "
                           f"({len(batch)} queries); saved={reporter.count}/{len(pending)}", flush=True)
+                    batch_started = time.monotonic()
                     if loaded_judge is not None:
+                        requests = [GenerationRequest(query_id,
+                            format_judgement_prompt(template, mode, paper, selected, str(row.get("query") or "")),
+                            images=tuple(paper_image_paths(paper)), max_tokens=config.judgement_max_tokens,
+                            temperature=config.judgement_temperature)
+                            for row, query_id, _, paper, selected in batch]
+                        print(f"Judgement batch prepared in {time.monotonic() - batch_started:.1f}s: "
+                              f"prompt_chars={sum(len(request.prompt) for request in requests)} "
+                              f"images={sum(len(request.images) for request in requests)}; "
+                              "starting backend image processing and inference", flush=True)
                         inference_started = time.monotonic()
-                        results = ordered_results([GenerationRequest(query_id, "") for _, query_id, _, _, _ in batch],
-                                                  next(results_batches))
-                        print(f"Judgement backend returned; batch wait took {time.monotonic() - inference_started:.1f}s "
-                              "(including any unfinished preparation)", flush=True)
+                        results = ordered_results(requests, loaded_judge.generate(requests))
+                        print(f"Judgement backend returned in {time.monotonic() - inference_started:.1f}s", flush=True)
                         judgements = [parse_judgement_output(result.text.strip(), config) if result.error is None
                                       else {"error": str(result.error)}
                                       for result in results]
@@ -244,11 +233,7 @@ def main(args: argparse.Namespace | None = None) -> int:
                         processed += 1
                         reporter.update(scanned=scanned, skipped=collection_skipped)
             finally:
-                try:
-                    if results_batches is not None:
-                        results_batches.close()
-                finally:
-                    reporter.close()
+                reporter.close()
     elapsed = time.monotonic() - started
     print(json.dumps({"processed": processed, "skipped": skipped, "failed": failed,
                       "missing_papers": missing,

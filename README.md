@@ -262,13 +262,13 @@ isolate engine startup or `run` to judge two pending queries. See
 [startup diagnostics](docs/query_judgement_startup.md) for runner comparisons and stack traces.
 
 To submit all pending training judgements as a PBS job with Gemma 4, spawned
-engine multiprocessing, and batch size 32, run from the cluster login node:
+engine multiprocessing, and batch size 16, run from the cluster login node:
 
 ```bash
 scripts/query_generation/submit_judgements_h200.sh
 ```
 
-This requests one H200 for up to 24 hours, uses eager execution, and submits 32
+This requests one H200 for up to 24 hours, uses eager execution, and submits 16
 queries per batch with up to 16 concurrent engine sequences. It enables engine
 multiprocessing with `spawn` and carries the saved token path into
 the PBS worker explicitly. It prints the job ID and plan path; live progress is
@@ -278,9 +278,7 @@ Existing saved judgements are skipped regardless of judge model; remaining rows
 record the new model in their judgement metadata. The Gemma 4 configuration is
 verified locally; GPU throughput and spawned startup still need a cluster run.
 
-Standalone query judgements are appended to `data/query_collections/<domain>/query_generation_train/visual_and_text/query_judgements.jsonl` beside `queries.jsonl` (use `query_generation_test` for the test split). The stage prints the resolved input/output paths before loading the model, announces model readiness and each inference batch, and reports progress only after a judgement has been flushed and synced to disk, using the same progress style as query generation. Existing query IDs are skipped on reruns. The H200 judgement batch size defaults to 32; override it with `visual_query.judgement.batch_size=NUMBER`. Results are saved after each batch returns. No judgements can be written while the model is still initializing.
-
-With vLLM, standalone judgement prepares one batch ahead while the current batch runs. Image decoding uses four worker threads; override this with `launcher.vllm.image_load_workers=NUMBER` (at least 1). At most the current and next windows hold decoded images, and early exits release prefetched images. The 32-query application window keeps work queued for the 16 concurrent engine sequences. To try a larger window, append `visual_query.judgement.batch_size=64`; decoded-image memory increases with the window size. The interactive two-query diagnostic retains its explicit batch size of 16. Transformers continues to process one batch at a time.
+Standalone query judgements are appended to `data/query_collections/<domain>/query_generation_train/visual_and_text/query_judgements.jsonl` beside `queries.jsonl` (use `query_generation_test` for the test split). The stage prints the resolved input/output paths before loading the model, announces model readiness and each inference batch, and reports progress only after a judgement has been flushed and synced to disk, using the same progress style as query generation. Existing query IDs are skipped on reruns. The H200 judgement batch size defaults to 16; override it with `visual_query.judgement.batch_size=NUMBER`. Results are saved after each batch returns. No judgements can be written while the model is still initializing.
 
 Query generation considers at most the first 15 images in each paper. Set `visual_query.selection.max_images=NUMBER` to change this cap; it also applies to clue coverage and images sent to the optional query judge.
 

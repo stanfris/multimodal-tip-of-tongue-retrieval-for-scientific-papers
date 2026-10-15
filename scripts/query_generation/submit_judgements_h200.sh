@@ -17,7 +17,7 @@ fi
 exec "$ROOT_DIR/scripts/query_generation/judge_train_queries.sh" \
   split=train launcher=pbs_h200 model=gemma4_judge \
   model.provider=vllm visual_query.judgement.provider=vllm \
-  stage.limit=null visual_query.judgement.batch_size=32 \
+  stage.limit=null visual_query.judgement.batch_size=16 \
   launcher.vllm.max_num_seqs=16 ++launcher.vllm.enforce_eager=true \
   ++launcher.environment.VLLM_ENABLE_V1_MULTIPROCESSING=1 \
   ++launcher.environment.VLLM_WORKER_MULTIPROC_METHOD=spawn \
