@@ -4,8 +4,9 @@
 
 The judge now defaults to `google/gemma-4-12B-it`, with application batch size 16
 and H200 vLLM concurrency 16. Standalone judgement enables engine multiprocessing
-with the `spawn` start method. `submit_judgements_h200.sh` submits all pending
-queries for up to 24 hours; `interactive_judgements.sh run` retains its two-query
+with the `spawn` start method. Use `judge_train_queries.sh` with
+`launcher=pbs_h200 launcher.walltime=01:00:00` for a one-hour job;
+`interactive_judgements.sh run` retains its two-query
 diagnostic limit (append `stage.limit=null` to run all pending queries). The small
 probe remains in-process. Older Gemma 3 logs and configurations below document
 the investigation, not the current defaults. The separate multiprocessing

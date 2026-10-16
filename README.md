@@ -248,6 +248,7 @@ HF_TOKEN_FILE="$(uv run python -c 'from huggingface_hub.constants import HF_TOKE
 scripts/query_generation/judge_train_queries.sh \
   split=train \
   launcher=pbs_h200 \
+  launcher.walltime=01:00:00 \
   model=gemma4_judge \
   model.provider=vllm \
   visual_query.judgement.provider=vllm \
@@ -261,19 +262,10 @@ to request an interactive GPU shell, then run the same script with `probe` to
 isolate engine startup or `run` to judge two pending queries. See
 [startup diagnostics](docs/query_judgement_startup.md) for runner comparisons and stack traces.
 
-To submit all pending training judgements as a PBS job with Gemma 4, spawned
-engine multiprocessing, and batch size 16, run from the cluster login node:
-
-```bash
-scripts/query_generation/submit_judgements_h200.sh
-```
-
-This requests one H200 for up to 24 hours, uses eager execution, and submits 16
-queries per batch with up to 16 concurrent engine sequences. It enables engine
-multiprocessing with `spawn` and carries the saved token path into
-the PBS worker explicitly. It prints the job ID and plan path; live progress is
-in `judge_queries.log` beside the plan. Rerun the same command to resume after a
-walltime limit. Append Hydra overrides to change the walltime or batching.
+The judgement command above requests one H200 for up to one hour. Use
+`split=test` to judge the test collection. It prints the job ID and plan path;
+live progress is in `judge_queries.log` beside the plan. Rerun the same command
+to resume after a walltime limit.
 Existing saved judgements are skipped regardless of judge model; remaining rows
 record the new model in their judgement metadata. The Gemma 4 configuration is
 verified locally; GPU throughput and spawned startup still need a cluster run.
@@ -294,6 +286,10 @@ looks for a numeric or boolean value in `judgement.raw_output`, even when the
 model's JSON was truncated. Use `--field FIELD` to count another judgement field,
 such as `overall_grounded`. Rows without a readable value are listed after the
 counts with their absolute file path, line number, query ID, and failure reason.
+Add `--delete-failed` to remove exactly those rows from the judgement files.
+Rows with scores recovered from `raw_output` are kept. Counts and line numbers
+describe the files before deletion; a deletion summary follows. Without the flag,
+files are unchanged.
 
 Query generation considers at most the first 15 images in each paper. Set `visual_query.selection.max_images=NUMBER` to change this cap; it also applies to clue coverage and images sent to the optional query judge.
 
