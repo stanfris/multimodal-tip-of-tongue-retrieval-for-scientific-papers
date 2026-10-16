@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from collections import Counter
 from pathlib import Path
 
@@ -29,9 +30,18 @@ def main() -> int:
 
     counts: Counter[str] = Counter()
     missing = 0
+    raw_field = re.compile(
+        rf'(?<!\\)"{re.escape(args.field)}"\s*:\s*'
+        r'(true|false|null|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)(?=\s*[,}\]]|\s*$)'
+    )
     for path in paths:
         for row in read_jsonl_objects(path):
-            value = row["judgement"].get(args.field)
+            judgement = row["judgement"]
+            value = judgement.get(args.field)
+            if value is None:
+                match = raw_field.search(judgement.get("raw_output") or "")
+                if match is not None:
+                    value = json.loads(match.group(1))
             if value is None:
                 missing += 1
             else:
