@@ -16,7 +16,10 @@ def main() -> int:
         "path", nargs="?", type=Path, default=Path("data/query_collections"),
         help="Judgement JSONL file or directory to search recursively (default: data/query_collections).",
     )
-    parser.add_argument("--field", default="score", help="Judgement field to count (default: score).")
+    parser.add_argument(
+        "--field", default="relevance_score",
+        help="Judgement field to count (default: relevance_score).",
+    )
     args = parser.parse_args()
     if not args.path.exists():
         raise FileNotFoundError(args.path)

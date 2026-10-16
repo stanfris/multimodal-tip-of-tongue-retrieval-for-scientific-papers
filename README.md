@@ -288,9 +288,9 @@ PYTHONPATH=src python -m queries.count_query_judgements
 PYTHONPATH=src python -m queries.count_query_judgements path/to/query_judgements.jsonl
 ```
 
-The report includes missing/null values separately and counts each saved row once.
-The current judgement prompt returns `overall_grounded` rather than a numeric
-score; use `--field overall_grounded` to count its true/false values.
+The report counts `judgement.relevance_score`, includes missing/null values
+separately, and counts each saved row once. Use `--field FIELD` to count another
+judgement field, such as `overall_grounded`.
 
 Query generation considers at most the first 15 images in each paper. Set `visual_query.selection.max_images=NUMBER` to change this cap; it also applies to clue coverage and images sent to the optional query judge.
 
