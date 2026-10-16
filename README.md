@@ -280,6 +280,18 @@ verified locally; GPU throughput and spawned startup still need a cluster run.
 
 Standalone query judgements are appended to `data/query_collections/<domain>/query_generation_train/visual_and_text/query_judgements.jsonl` beside `queries.jsonl` (use `query_generation_test` for the test split). The stage prints the resolved input/output paths before loading the model, announces model readiness and each inference batch, and reports progress only after a judgement has been flushed and synced to disk, using the same progress style as query generation. Existing query IDs are skipped on reruns. The H200 judgement batch size defaults to 16; override it with `visual_query.judgement.batch_size=NUMBER`. Results are saved after each batch returns. No judgements can be written while the model is still initializing.
 
+Count saved judgements by score across all collections, or pass a single judgement
+file or a collection directory to narrow the count:
+
+```bash
+PYTHONPATH=src python -m queries.count_query_judgements
+PYTHONPATH=src python -m queries.count_query_judgements path/to/query_judgements.jsonl
+```
+
+The report includes missing/null values separately and counts each saved row once.
+The current judgement prompt returns `overall_grounded` rather than a numeric
+score; use `--field overall_grounded` to count its true/false values.
+
 Query generation considers at most the first 15 images in each paper. Set `visual_query.selection.max_images=NUMBER` to change this cap; it also applies to clue coverage and images sent to the optional query judge.
 
 By default, query generation requires usable clues for every considered figure. Set `visual_query.selection.allow_missing_figure_clues=true` to use the available figure clues when some are missing. A paper still needs a usable textual clue and at least one usable figure clue.
