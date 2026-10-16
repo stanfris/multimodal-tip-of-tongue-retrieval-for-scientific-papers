@@ -29,13 +29,17 @@ def main() -> int:
         raise FileNotFoundError(f"No query_judgements.jsonl files found under {args.path}")
 
     counts: Counter[str] = Counter()
-    missing = 0
+    failures = []
     raw_field = re.compile(
         rf'(?<!\\)"{re.escape(args.field)}"\s*:\s*'
         r'(true|false|null|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)(?=\s*[,}\]]|\s*$)'
     )
     for path in paths:
-        for row in read_jsonl_objects(path):
+        rows = read_jsonl_objects(path)
+        with path.open(encoding="utf-8") as handle:
+            line_numbers = [number for number, line in enumerate(handle, 1) if line.strip()]
+        assert len(line_numbers) == len(rows)
+        for line_number, row in zip(line_numbers, rows):
             judgement = row["judgement"]
             value = judgement.get(args.field)
             if value is None:
@@ -43,16 +47,24 @@ def main() -> int:
                 if match is not None:
                     value = json.loads(match.group(1))
             if value is None:
-                missing += 1
+                reason = judgement.get("error") or (
+                    "parse_error; no readable value in raw_output" if judgement.get("parse_error")
+                    else f"{args.field} missing/null; no readable value in raw_output"
+                )
+                failures.append((path.resolve(), line_number, row.get("query_id"), reason))
             else:
                 counts[json.dumps(value, ensure_ascii=False)] += 1
 
-    total = sum(counts.values()) + missing
+    total = sum(counts.values()) + len(failures)
     print(f"Files: {len(paths)} | Judgements: {total} | Field: {args.field}")
     print("Value\tCount")
     for value, count in sorted(counts.items()):
         print(f"{value}\t{count}")
-    print(f"Missing/null\t{missing}")
+    print(f"Missing/null\t{len(failures)}")
+    if failures:
+        print("\nJudgements without a readable value:")
+        for path, line_number, query_id, reason in failures:
+            print(f"{path}:{line_number} | query_id={query_id} | {reason}")
     return 0
 
 

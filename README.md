@@ -292,7 +292,8 @@ The report counts `judgement.relevance_score`, includes missing/null values
 separately, and counts each saved row once. If the field is missing/null, it also
 looks for a numeric or boolean value in `judgement.raw_output`, even when the
 model's JSON was truncated. Use `--field FIELD` to count another judgement field,
-such as `overall_grounded`.
+such as `overall_grounded`. Rows without a readable value are listed after the
+counts with their absolute file path, line number, query ID, and failure reason.
 
 Query generation considers at most the first 15 images in each paper. Set `visual_query.selection.max_images=NUMBER` to change this cap; it also applies to clue coverage and images sent to the optional query judge.
 
