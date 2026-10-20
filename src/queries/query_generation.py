@@ -55,6 +55,7 @@ DEFAULT_MODELS = {
     "vllm": "microsoft/phi-4",
 }
 DEFAULT_JUDGEMENT_MODEL = "google/gemma-4-12B-it"
+DEFAULT_JUDGEMENT_MAX_TOKENS = 4096
 
 
 @dataclass(frozen=True)
@@ -86,7 +87,7 @@ class QueryGenerationConfig:
     judgement_model_provider: str = "vllm"
     judgement_model: str = DEFAULT_JUDGEMENT_MODEL
     judgement_temperature: float = 0.0
-    judgement_max_tokens: int = 900
+    judgement_max_tokens: int = DEFAULT_JUDGEMENT_MAX_TOKENS
     judgement_device_map: str = "auto"
     judgement_dtype: str = "bfloat16"
     judgement_attn_implementation: str | None = "sdpa"
@@ -892,7 +893,7 @@ def _config_from_yaml(path: Path, *, query_set: ManagedSet = "train") -> QueryGe
         judgement_model_provider=judgement.get("provider", "vllm"),
         judgement_model=judgement.get("model", DEFAULT_JUDGEMENT_MODEL),
         judgement_temperature=float(judgement.get("temperature", 0.0)),
-        judgement_max_tokens=int(judgement.get("max_tokens", 900)),
+        judgement_max_tokens=int(judgement.get("max_tokens", DEFAULT_JUDGEMENT_MAX_TOKENS)),
         judgement_device_map=judgement.get("device_map", "auto"),
         judgement_dtype=judgement.get("dtype", "bfloat16"),
         judgement_attn_implementation=judgement.get("attn_implementation", "sdpa"),

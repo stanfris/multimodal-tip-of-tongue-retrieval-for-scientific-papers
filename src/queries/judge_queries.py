@@ -19,6 +19,7 @@ from common.managed_settings import DEFAULT_SETTINGS_PATH, load_managed_settings
 from preprocessing.preprocessed import DEFAULT_DATA_DIR, clue_domain_dir, read_preprocessed_papers
 from queries.query_generation import (
     DEFAULT_JUDGEMENT_MODEL,
+    DEFAULT_JUDGEMENT_MAX_TOKENS,
     DEFAULT_JUDGEMENT_PROMPT,
     DEFAULT_MAX_IMAGES,
     MemoryComponent,
@@ -57,7 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--provider", choices=["transformers", "vllm"], default="vllm")
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--temperature", type=float, default=0.0)
-    parser.add_argument("--max-tokens", type=int, default=900)
+    parser.add_argument("--max-tokens", type=int, default=DEFAULT_JUDGEMENT_MAX_TOKENS)
     parser.add_argument("--max-images", type=int, default=DEFAULT_MAX_IMAGES)
     parser.add_argument("--device-map", default="auto")
     parser.add_argument("--dtype", default="bfloat16")

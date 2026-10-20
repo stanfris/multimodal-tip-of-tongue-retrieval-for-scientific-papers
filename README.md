@@ -248,7 +248,7 @@ HF_TOKEN_FILE="$(uv run python -c 'from huggingface_hub.constants import HF_TOKE
 scripts/query_generation/judge_train_queries.sh \
   split=train \
   launcher=pbs_h200 \
-  launcher.walltime=01:00:00 \
+  launcher.walltime=02:00:00 \
   model=gemma4_judge \
   model.provider=vllm \
   visual_query.judgement.provider=vllm \
@@ -262,13 +262,19 @@ to request an interactive GPU shell, then run the same script with `probe` to
 isolate engine startup or `run` to judge two pending queries. See
 [startup diagnostics](docs/query_judgement_startup.md) for runner comparisons and stack traces.
 
-The judgement command above requests one H200 for up to one hour. Use
+The judgement command above requests one H200 for up to two hours. Use
 `split=test` to judge the test collection. It prints the job ID and plan path;
 live progress is in `judge_queries.log` beside the plan. Rerun the same command
 to resume after a walltime limit.
 Existing saved judgements are skipped regardless of judge model; remaining rows
 record the new model in their judgement metadata. The Gemma 4 configuration is
 verified locally; GPU throughput and spawned startup still need a cluster run.
+
+Judgements allow up to 4096 output tokens to accommodate claim-by-claim evidence.
+Override this with `visual_query.judgement.max_tokens=NUMBER` (or `--max-tokens`
+for the standalone Python judge). To retry truncated judgements, remove their
+rows with `queries.count_query_judgements --delete-failed` before resubmitting;
+existing saved query IDs are otherwise skipped.
 
 Standalone query judgements are appended to `data/query_collections/<domain>/query_generation_train/visual_and_text/query_judgements.jsonl` beside `queries.jsonl` (use `query_generation_test` for the test split). The stage prints the resolved input/output paths before loading the model, announces model readiness and each inference batch, and reports progress only after a judgement has been flushed and synced to disk, using the same progress style as query generation. Existing query IDs are skipped on reruns. The H200 judgement batch size defaults to 16; override it with `visual_query.judgement.batch_size=NUMBER`. Results are saved after each batch returns. No judgements can be written while the model is still initializing.
 

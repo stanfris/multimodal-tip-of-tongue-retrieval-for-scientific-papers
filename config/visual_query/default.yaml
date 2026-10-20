@@ -24,7 +24,7 @@ judgement:
   provider: vllm
   model: google/gemma-4-12B-it
   temperature: 0.0
-  max_tokens: 900
+  max_tokens: 4096
   batch_size: ${oc.select:launcher.judgement_batch_size,16}
   device_map: ${launcher.device_map}
   dtype: ${launcher.dtype}
