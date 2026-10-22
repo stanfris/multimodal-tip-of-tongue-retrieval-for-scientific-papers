@@ -46,5 +46,5 @@ Return JSON only:
   ],
   "unsupported_claims": [],
   "relevance_score": 2,
-  "reasoning": "Brief explanation of the overall relevance score."
+  "reasoning": "Very Brief explanation of the overall relevance score."
 }
