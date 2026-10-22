@@ -10,7 +10,7 @@ from pathlib import Path
 from huggingface_hub import CommitOperationAdd, CommitOperationDelete, HfApi, RepoFile
 
 
-DEFAULT_REPO = "kasys/open-source-scientific-documents"
+DEFAULT_REPO = "kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-documents"
 DEFAULT_CARD = Path(__file__).resolve().parents[2] / "docs" / "huggingface_dataset_README.md"
 ROOT_BUILD_FILES = {"duplicates.parquet", "preparation_report.json"}
 

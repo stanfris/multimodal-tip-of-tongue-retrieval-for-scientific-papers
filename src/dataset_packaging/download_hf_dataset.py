@@ -15,7 +15,7 @@ from dataset_packaging.restore_hf_dataset import restore_dataset
 
 
 LOGGER = logging.getLogger(__name__)
-DEFAULT_REPO_ID = "kasys/open-source-scientific-documents"
+DEFAULT_REPO_ID = "kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-documents"
 COMPONENTS = ("pdfs", "preprocessed", "clues", "query_collections", "splits")
 BUILD_ARTIFACTS = ["duplicates.parquet", "preparation_report.json", "*.manifest.json"]
 

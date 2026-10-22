@@ -31,7 +31,7 @@ from common.managed_settings import resolve_path_under_root
 
 LOGGER = logging.getLogger(__name__)
 
-DEFAULT_REPO_ID = "kasys/open-source-scientific-documents"
+DEFAULT_REPO_ID = "kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-documents"
 DEFAULT_OUTPUT_DIR = Path("huggingface_dataset")
 DEFAULT_SHARD_SIZE_GB = 1.0
 DEFAULT_ADDITIONAL_SHARD_SIZE_GB = 1.0
@@ -114,7 +114,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "Prepare, validate, and optionally upload the shared WebDataset PDF corpus "
-            "for kasys/open-source-scientific-documents."
+            "for kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-documents."
         )
     )
     parser.add_argument("--settings", type=Path, default=DEFAULT_SETTINGS_PATH, help="Managed settings YAML.")

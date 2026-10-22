@@ -1,19 +1,19 @@
 # Multimodal Tip-of-the-Tongue Retrieval for Scientific Papers
 
-This repository is part of the paper `Multimodal Tip-of-the-Tongue Retrieval for Scientific Papers`. Here, we provide all of the code necessary to generate all components of our dataset, in order to provide a basis for future work in generating queries and documents. We also provide instructions to only download our dataset, hosted on [HuggingFace](https://huggingface.co/datasets/kasys/open-source-scientific-documents), such that you can use it directly.
+This repository is part of the paper `Multimodal Tip-of-the-Tongue Retrieval for Scientific Papers`. Here, we provide all of the code necessary to generate all components of our dataset, in order to provide a basis for future work in generating queries and documents. We also provide instructions to only download our dataset, hosted on [HuggingFace](https://huggingface.co/datasets/kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-documents), such that you can use it directly.
 
 Our instructions first explain how to download the full dataset. Further sections explain repository structure, and how to run key elements of the query generation pipeline.
 ## Downloading the Dataset from Huggingface
 
 Below, we show how to download our data through scripts we provide, which is an intended method for practitioners to build upon our work. If you simply wish download our full datset, you can also apply the Hugging Face cli:
 ```bash
-hf download kasys/open-source-scientific-documents \
+hf download kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-documents \
   --repo-type dataset \
-  --local-dir open-source-scientific-documents
+  --local-dir multimodal-tip-of-the-tongue-retrieval-for-scientific-documents
 ```
 This does not handle extraction, workers, or partial components however, we provide these below. The scripts shown below handle each of these components and should be run on a machine with sufficient storage space (at least 500GB of free space). Download selected components into the normal `data/` layout. The downloader
 keeps the filtered Hub snapshot and transfer state under
-`data/.hf_dataset_download/kasys--open-source-scientific-documents/`,
+`data/.hf_dataset_download/kasys--multimodal-tip-of-the-tongue-retrieval-for-scientific-documents/`,
 so rerunning a command resumes downloads and skips matching restored files.
 From the repository root, run the script with no arguments to download and restore everything (PDFs, preprocessed content, clues, query collections, and splits) under the default `data/` directory:
 
@@ -52,7 +52,7 @@ snapshot. Its target contains source folders such as `ACL`, `Physics`, and
 
 ```bash
 scripts/packaging/restore_pdf_datasets_from_huggingface.sh \
-  data/.hf_dataset_download/kasys--open-source-scientific-documents \
+  data/.hf_dataset_download/kasys--multimodal-tip-of-the-tongue-retrieval-for-scientific-documents \
   data/pdf_datasets
 ```
 
@@ -63,7 +63,7 @@ Use `--skip-checksum` only for trusted archives; size checks still apply:
 
 ```bash
 scripts/packaging/restore_pdf_datasets_from_huggingface.sh \
-  data/.hf_dataset_download/kasys--open-source-scientific-documents \
+  data/.hf_dataset_download/kasys--multimodal-tip-of-the-tongue-retrieval-for-scientific-documents \
   data/pdf_datasets \
   --workers 4 --skip-checksum
 ```

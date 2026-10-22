@@ -14,7 +14,7 @@ from pathlib import Path, PurePosixPath
 
 
 DATASETS = ("ACL", "Biology", "Engineering", "Medicine", "Physics")
-DEFAULT_REPO = "kasys/open-source-scientific-documents"
+DEFAULT_REPO = "kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-documents"
 
 
 def parser() -> argparse.ArgumentParser:

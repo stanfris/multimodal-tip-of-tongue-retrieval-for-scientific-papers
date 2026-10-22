@@ -11,7 +11,7 @@ else
   DATASET_DIR="huggingface_dataset"
 fi
 
-HF_REPO_ID="${HF_REPO_ID:-kasys/open-source-scientific-documents}"
+HF_REPO_ID="${HF_REPO_ID:-kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-documents}"
 HF_CLI="${HF_CLI:-hf}"
 export HF_XET_HIGH_PERFORMANCE="${HF_XET_HIGH_PERFORMANCE:-1}"
 

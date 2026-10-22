@@ -27,7 +27,7 @@ export HF_XET_HIGH_PERFORMANCE="${HF_XET_HIGH_PERFORMANCE:-1}"
 
 echo "Starting additional dataset upload at $(date -Is)"
 echo "Data root: $VTT_DATA_ROOT"
-echo "Repository: ${HF_REPO_ID:-kasys/open-source-scientific-documents}"
+echo "Repository: ${HF_REPO_ID:-kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-documents}"
 echo "Workers: 8; maximum files per shard: 100000; walltime: 03:00:00"
 echo "Skipped preprocessed domains: ${VTT_SKIP_PREPROCESSED_DOMAINS:-none}"
 
@@ -35,7 +35,7 @@ command=(.venv/bin/python -m dataset_packaging.prepare_hf_dataset \
   --additional-only \
   --data-root "$VTT_DATA_ROOT" \
   --output-dir "${PBS_LOCALDIR:-/tmp}/huggingface_dataset" \
-  --repo-id "${HF_REPO_ID:-kasys/open-source-scientific-documents}" \
+  --repo-id "${HF_REPO_ID:-kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-documents}" \
   --hf-cli "$PWD/.venv/bin/hf" \
   --additional-shard-size-gb 1 \
   --additional-max-files-per-shard 100000 \

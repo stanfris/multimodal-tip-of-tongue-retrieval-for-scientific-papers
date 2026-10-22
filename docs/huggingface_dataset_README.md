@@ -54,7 +54,7 @@ import pandas as pd
 import tarfile
 from huggingface_hub import hf_hub_download
 
-repo_id = "kasys/open-source-scientific-documents"
+repo_id = "kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-documents"
 index_path = hf_hub_download(repo_id, "metadata.parquet", repo_type="dataset")
 index = pd.read_parquet(index_path)
 
