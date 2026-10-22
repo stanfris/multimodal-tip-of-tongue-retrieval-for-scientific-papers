@@ -1,5 +1,5 @@
 name: query_generation
-seed: 13
+seed: 11
 prompt:
   name: query_generation
   version: v1
