@@ -4,13 +4,25 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
-import tempfile
 from collections import Counter
 from pathlib import Path
 
-from common.jsonl import read_jsonl_objects
+from common.jsonl import delete_jsonl_lines, read_jsonl_objects
+
+
+def read_judgement_value(judgement: dict, field: str = "relevance_score"):
+    """Read a judgement field, recovering a missing value from truncated model output."""
+    value = judgement.get(field)
+    if value is None:
+        match = re.search(
+            rf'(?<!\\)"{re.escape(field)}"\s*:\s*'
+            r'(true|false|null|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)(?=\s*[,}\]]|\s*$)',
+            judgement.get("raw_output") or "",
+        )
+        if match is not None:
+            value = json.loads(match.group(1))
+    return value
 
 
 def main() -> int:
@@ -37,10 +49,6 @@ def main() -> int:
     counts: Counter[str] = Counter()
     failures = []
     rewrites = []
-    raw_field = re.compile(
-        rf'(?<!\\)"{re.escape(args.field)}"\s*:\s*'
-        r'(true|false|null|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)(?=\s*[,}\]]|\s*$)'
-    )
     for path in paths:
         rows = read_jsonl_objects(path)
         with path.open(encoding="utf-8", newline="") as handle:
@@ -50,11 +58,7 @@ def main() -> int:
         assert len(line_numbers) == len(rows)
         for line_number, row in zip(line_numbers, rows):
             judgement = row["judgement"]
-            value = judgement.get(args.field)
-            if value is None:
-                match = raw_field.search(judgement.get("raw_output") or "")
-                if match is not None:
-                    value = json.loads(match.group(1))
+            value = read_judgement_value(judgement, args.field)
             if value is None:
                 reason = judgement.get("error") or (
                     "parse_error; no readable value in raw_output" if judgement.get("parse_error")
@@ -65,7 +69,7 @@ def main() -> int:
             else:
                 counts[json.dumps(value, ensure_ascii=False)] += 1
         if args.delete_failed and failed_lines:
-            rewrites.append((path, lines, failed_lines))
+            rewrites.append((path, failed_lines))
 
     total = sum(counts.values()) + len(failures)
     print(f"Files: {len(paths)} | Judgements: {total} | Field: {args.field}")
@@ -77,18 +81,8 @@ def main() -> int:
         print("\nJudgements without a readable value:")
         for path, line_number, query_id, reason in failures:
             print(f"{path}:{line_number} | query_id={query_id} | {reason}")
-    for path, lines, failed_lines in rewrites:
-        with tempfile.NamedTemporaryFile(
-            mode="w", encoding="utf-8", newline="", dir=path.parent, delete=False,
-        ) as handle:
-            temporary_path = Path(handle.name)
-            try:
-                handle.writelines(line for number, line in enumerate(lines, 1) if number not in failed_lines)
-                handle.close()
-                temporary_path.chmod(path.stat().st_mode)
-                os.replace(temporary_path, path)
-            finally:
-                temporary_path.unlink(missing_ok=True)
+    for path, failed_lines in rewrites:
+        delete_jsonl_lines(path, failed_lines)
         print(f"Deleted {len(failed_lines)} rows from {path.resolve()}")
     return 0
 

@@ -4,9 +4,27 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 import warnings
 from pathlib import Path
 from typing import Any
+
+
+def delete_jsonl_lines(path: Path, line_numbers: set[int]) -> None:
+    """Atomically delete selected 1-based lines, preserving the remaining bytes and permissions."""
+    with path.open(encoding="utf-8", newline="") as handle:
+        lines = handle.readlines()
+    with tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", newline="", dir=path.parent, delete=False,
+    ) as handle:
+        temporary_path = Path(handle.name)
+        try:
+            handle.writelines(line for number, line in enumerate(lines, 1) if number not in line_numbers)
+            handle.close()
+            temporary_path.chmod(path.stat().st_mode)
+            os.replace(temporary_path, path)
+        finally:
+            temporary_path.unlink(missing_ok=True)
 
 
 def read_jsonl_objects(

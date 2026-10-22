@@ -297,6 +297,21 @@ Rows with scores recovered from `raw_output` are kept. Counts and line numbers
 describe the files before deletion; a deletion summary follows. Without the flag,
 files are unchanged.
 
+To remove queries with a zero or missing/unreadable relevance score from the
+query dataset, leaving all judgement files and other collection files unchanged:
+
+```bash
+PYTHONPATH=src python -m queries.filter_query_dataset --dry-run
+PYTHONPATH=src python -m queries.filter_query_dataset
+```
+
+Pass a judgement JSONL file or collection directory to limit the scope. The script
+matches query IDs within each judgement file's sibling `queries.jsonl` and edits
+only that query file. Queries without a saved judgement are kept. Missing scores
+are recovered from `raw_output` using the same logic as the count command; zero
+scores and scores that are not finite numbers are removed. All inputs are read
+and validated before any query file is changed.
+
 Query generation considers at most the first 15 images in each paper. Set `visual_query.selection.max_images=NUMBER` to change this cap; it also applies to clue coverage and images sent to the optional query judge.
 
 By default, query generation requires usable clues for every considered figure. Set `visual_query.selection.allow_missing_figure_clues=true` to use the available figure clues when some are missing. A paper still needs a usable textual clue and at least one usable figure clue.
