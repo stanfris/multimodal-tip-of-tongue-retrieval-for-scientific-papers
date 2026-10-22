@@ -5,7 +5,7 @@ This repository is part of the paper `Multimodal Tip-of-the-Tongue Retrieval for
 Our instructions first explain how to download the full dataset. Further sections explain repository structure, and how to run key elements of the query generation pipeline.
 ## Downloading the Dataset from Huggingface
 
-Below, we show how to download our data through scripts we provide, which is an intended method for practitioners to build upon our work. If you simply wish download our full datset, you can also apply the Hugging Face cli:
+Below, we show how to download our data through scripts we provide, which is an intended method for practitioners to build upon our work. If you simply wish download our full dataset, you can also apply the Hugging Face cli:
 ```bash
 hf download kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-documents \
   --repo-type dataset \
