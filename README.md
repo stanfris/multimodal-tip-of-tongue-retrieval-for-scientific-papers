@@ -59,13 +59,12 @@ scripts/packaging/restore_pdf_datasets_from_huggingface.sh \
 The restore command checks every PDF's recorded size and SHA-256 checksum, and
 will not replace existing PDFs unless `--overwrite` is supplied. For faster
 restoration, process independent TAR shards concurrently with `--workers`.
-Use `--skip-checksum` only for trusted archives; size checks still apply:
 
 ```bash
 scripts/packaging/restore_pdf_datasets_from_huggingface.sh \
   data/.hf_dataset_download/kasys--multimodal-tip-of-the-tongue-retrieval-for-scientific-documents \
   data/pdf_datasets \
-  --workers 4 --skip-checksum
+  --workers 4
 ```
 
 Our code provides the way in which our dataset is uploaded, which may be useful for reproducibility and transparency purposes. We provide some examples to upload our data, but this is not an integral part of the pipeline for dataset creation.
@@ -87,7 +86,6 @@ src/
   clues/                 # Textual and visual clue generation
   queries/               # Query generation, judgement, and test collections
   dataset_packaging/     # Hugging Face packaging and restoration
-  review/                # Streamlit query review application
 
 scripts/
   environment/           # Environment setup
@@ -98,21 +96,10 @@ scripts/
   preprocessing/         # Preprocessing workflow wrappers
   clue_generation/       # Clue-generation wrappers
   query_generation/      # Query-generation and judgement wrappers
-  review/                # Query review application launcher
   packaging/             # Hugging Face upload/download wrappers
 
 config/                   # Hydra launcher, stage, split, model, and dataset groups
 logs/                     # Runtime logs grouped by script folder
-```
-
-Generated data is intentionally ignored by Git:
-
-```text
-data/acl_subset/                          # curated ACL metadata and PDFs
-data/arxiv_open_reuse/                    # arXiv CC BY/CC0 metadata, report, PDFs
-data/preprocessed/                       # extracted and compacted papers
-data/clues/                               # per-paper textual and visual clues
-data/query_collections/<id>/              # generated query/eval collections
 ```
 
 ## Installation
@@ -178,7 +165,7 @@ scripts/document_downloads/build_acl_subset.sh
 scripts/document_downloads/download_acl_pdfs.sh --max-workers 16
 scripts/document_downloads/build_pmc_oa_subset.sh --email you@example.org
 scripts/document_downloads/download_pmc_oa_pdfs.sh --max-workers 16
-scripts/document_downloads/build_arxiv_open_reuse.sh --metadata-only --snapshot-path data/arxiv_open_reuse/arxiv-metadata-oai-snapshot.json
+scripts/document_downloads/build_arxiv_open_reuse.sh --metadata-only
 scripts/document_downloads/download_arxiv_open_reuse_pdfs.sh --max-workers 32
 scripts/pdf_corpus/split_arxiv_pdfs_by_domain.sh --dry-run
 scripts/pdf_corpus/split_arxiv_pdfs_by_domain.sh
@@ -187,8 +174,7 @@ scripts/pdf_corpus/build_pdf_datasets_folder.sh
 scripts/pdf_corpus/build_pdf_dataset_split.sh --input-dir data/pdf_datasets --output data/splits/pdf_dataset_split.json
 ```
 
-The arXiv metadata command needs the snapshot at the shown path; omit
-`--snapshot-path` to let the builder download it with Kaggle credentials.
+The arXiv download also downloads the metadata snapshot, which requires a kaggle account.
 Download results and reports live under `data/acl_subset/`,
 `data/pmc_oa_strict/`, and `data/arxiv_open_reuse/`. Assembly writes
 `data/arxiv_open_reuse/pdfs_by_domain/` and `data/pdf_datasets/`. The last
@@ -199,7 +185,7 @@ when membership is unchanged and refuses to replace a different split unless
 
 ### MinerU extraction
 
-We apply MinerU for extraction of figures, with a configuration that allows for the running of full extraction on a single GPU at once, with optional configurations to parse a single dataset at a time. For settings or help to apply/tune MinerU, please refer to the MinerU documentation. Below, we show commands to run extraction for the pdf_dataset in this repository, one just for the train set, and another which applies all pdfs for the ACL domain set. Apply `--help` to view the available options.
+We apply MinerU for extraction of figures, with a configuration that allows for the running of full extraction on a single GPU at once, with optional configurations to parse a single dataset at a time. For settings or help to apply/tune MinerU, please refer to the MinerU documentation. Below, we show commands to run extraction for the pdf_dataset in this repository, one just for the train set, and another which applies all pdfs for the ACL domain set. Apply `--help` to view the available options. We provide implementations for slurm and pbs job submission, please change the launcher configurations to align with your setup.
 
 ```bash
 scripts/extraction/run_mineru_full_extraction.sh split=train launcher=pbs_h200
@@ -207,8 +193,7 @@ scripts/extraction/run_mineru_full_extraction.sh split=train+test launcher=slurm
 ```
 
 Reduction copies completed papers from `dataset.processed` to
-`dataset.preprocessed`, then compacts the copies there, cleaning up files from MinerU processes, as well as excluding equations, which are not applied in our work for visual components. Note that MinerU's original files
-remain in `processed`. 
+`dataset.preprocessed`, then compacts the copies there, cleaning up files from MinerU processes, as well as excluding equations, which are not applied in our work for visual components. Note that MinerU's original files remain in `processed` unless explicitly removed. 
 ```bash
 scripts/preprocessing/reduce_and_compact_preprocessed.sh
 ```
@@ -297,25 +282,9 @@ Rows with scores recovered from `raw_output` are kept. Counts and line numbers
 describe the files before deletion; a deletion summary follows. Without the flag,
 files are unchanged.
 
-To remove queries with a zero or missing/unreadable relevance score from the
-query dataset, leaving all judgement files and other collection files unchanged:
-
-```bash
-PYTHONPATH=src python -m queries.filter_query_dataset --dry-run
-PYTHONPATH=src python -m queries.filter_query_dataset
-```
-
-Pass a judgement JSONL file or collection directory to limit the scope. The script
-matches query IDs within each judgement file's sibling `queries.jsonl` and edits
-only that query file. Queries without a saved judgement are kept. Missing scores
-are recovered from `raw_output` using the same logic as the count command; zero
-scores and scores that are not finite numbers are removed. All inputs are read
-and validated before any query file is changed.
-
 Query generation considers at most the first 15 images in each paper. Set `visual_query.selection.max_images=NUMBER` to change this cap; it also applies to clue coverage and images sent to the optional query judge.
 
 By default, query generation requires usable clues for every considered figure. Set `visual_query.selection.allow_missing_figure_clues=true` to use the available figure clues when some are missing. A paper still needs a usable textual clue and at least one usable figure clue.
-
 
 ### Test sample
 

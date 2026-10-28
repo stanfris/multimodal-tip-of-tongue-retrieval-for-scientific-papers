@@ -50,40 +50,40 @@ jasmine,original_query,test_visual_and_text_q00227,Engineering,Engineering_2009.
 jasmine,original_query,test_visual_and_text_q00228,Engineering,Engineering_2010.01579,2,2,,2026-10-26T08:31:00.361626
 jasmine,original_query,test_visual_and_text_q00229,Engineering,Engineering_2010.13372,2,2,,2026-10-26T08:34:18.092386
 jasmine,original_query,test_visual_and_text_q00230,Engineering,Engineering_2010.15491,1,2,"the query is too broad and could correspond to many papers. While generally the details match the paper, they are too general to be conclusive",2026-10-26T08:43:32.974622
-jasmine,original_query,test_visual_and_text_q00231,Engineering,Engineering_2011.02900,,,,
-jasmine,original_query,test_visual_and_text_q00232,Engineering,Engineering_2011.07684,,,,
-jasmine,original_query,test_visual_and_text_q00233,Engineering,Engineering_2101.11740,,,,
-jasmine,original_query,test_visual_and_text_q00234,Engineering,Engineering_2103.02114,,,,
-jasmine,original_query,test_visual_and_text_q00235,Engineering,Engineering_2103.15674,,,,
-jasmine,original_query,test_visual_and_text_q00236,Engineering,Engineering_2103.16043,,,,
-jasmine,original_query,test_visual_and_text_q00237,Engineering,Engineering_2104.01728,,,,
-jasmine,original_query,test_visual_and_text_q00238,Engineering,Engineering_2104.02336,,,,
-jasmine,original_query,test_visual_and_text_q00239,Engineering,Engineering_2105.02306,,,,
-jasmine,original_query,test_visual_and_text_q00330,Medicine,Medicine_PMC10759266,,,,
-jasmine,original_query,test_visual_and_text_q00331,Medicine,Medicine_PMC10759606,,,,
-jasmine,original_query,test_visual_and_text_q00332,Medicine,Medicine_PMC10759736,,,,
-jasmine,original_query,test_visual_and_text_q00333,Medicine,Medicine_PMC10763063,,,,
-jasmine,original_query,test_visual_and_text_q00334,Medicine,Medicine_PMC10763142,,,,
-jasmine,original_query,test_visual_and_text_q00335,Medicine,Medicine_PMC10763182,,,,
-jasmine,original_query,test_visual_and_text_q00336,Medicine,Medicine_PMC10764834,,,,
-jasmine,original_query,test_visual_and_text_q00337,Medicine,Medicine_PMC10767005,,,,
-jasmine,original_query,test_visual_and_text_q00338,Medicine,Medicine_PMC10768213,,,,
-jasmine,original_query,test_visual_and_text_q00339,Medicine,Medicine_PMC10769095,,,,
-jasmine,original_query,test_visual_and_text_q00340,Medicine,Medicine_PMC10770204,,,,
-jasmine,original_query,test_visual_and_text_q00341,Medicine,Medicine_PMC10770325,,,,
-jasmine,original_query,test_visual_and_text_q00342,Medicine,Medicine_PMC10770879,,,,
-jasmine,original_query,test_visual_and_text_q00343,Medicine,Medicine_PMC10771704,,,,
-jasmine,original_query,test_visual_and_text_q00344,Medicine,Medicine_PMC10772428,,,,
-jasmine,original_query,test_visual_and_text_q00345,Medicine,Medicine_PMC10773016,,,,
-jasmine,original_query,test_visual_and_text_q00346,Medicine,Medicine_PMC10773313,,,,
-jasmine,original_query,test_visual_and_text_q00347,Medicine,Medicine_PMC10773478,,,,
-jasmine,original_query,test_visual_and_text_q00348,Medicine,Medicine_PMC10775664,,,,
-jasmine,original_query,test_visual_and_text_q00349,Medicine,Medicine_PMC10776501,,,,
-jasmine,original_query,test_visual_and_text_q00440,Physics,Physics_1510.07810,,,,
-jasmine,original_query,test_visual_and_text_q00441,Physics,Physics_1606.04412,,,,
-jasmine,original_query,test_visual_and_text_q00442,Physics,Physics_1609.06847,,,,
-jasmine,original_query,test_visual_and_text_q00443,Physics,Physics_1704.08177,,,,
-jasmine,original_query,test_visual_and_text_q00444,Physics,Physics_1705.01636,,,,
+jasmine,original_query,test_visual_and_text_q00231,Engineering,Engineering_2011.02900,2,2,,2026-10-27T09:48:51.323817
+jasmine,original_query,test_visual_and_text_q00232,Engineering,Engineering_2011.07684,1,2,,2026-10-27T09:57:43.800290
+jasmine,original_query,test_visual_and_text_q00233,Engineering,Engineering_2101.11740,2,2,,2026-10-27T10:00:20.678404
+jasmine,original_query,test_visual_and_text_q00234,Engineering,Engineering_2103.02114,2,2,,2026-10-27T10:02:52.772780
+jasmine,original_query,test_visual_and_text_q00235,Engineering,Engineering_2103.15674,2,2,,2026-10-27T10:05:29.636981
+jasmine,original_query,test_visual_and_text_q00236,Engineering,Engineering_2103.16043,2,2,,2026-10-27T10:09:33.692875
+jasmine,original_query,test_visual_and_text_q00237,Engineering,Engineering_2104.01728,2,2,,2026-10-27T10:54:50.137438
+jasmine,original_query,test_visual_and_text_q00238,Engineering,Engineering_2104.02336,2,2,,2026-10-27T11:00:12.442583
+jasmine,original_query,test_visual_and_text_q00239,Engineering,Engineering_2105.02306,2,2,,2026-10-27T11:07:25.117610
+jasmine,original_query,test_visual_and_text_q00330,Medicine,Medicine_PMC10759266,1,2,"Bar chart details are incorrect and ""metal"" is very vague - there could be many other studies that study different ions like magnesium etc. Overall, the hints in the query are too general and inaccurate to identify this paper specifically (~ 50-60%)",2026-10-27T11:12:22.515562
+jasmine,original_query,test_visual_and_text_q00331,Medicine,Medicine_PMC10759606,2,2,,2026-10-27T11:16:24.038323
+jasmine,original_query,test_visual_and_text_q00332,Medicine,Medicine_PMC10759736,2,2,,2026-10-27T11:22:49.622106
+jasmine,original_query,test_visual_and_text_q00333,Medicine,Medicine_PMC10763063,2,2,,2026-10-27T11:25:51.511843
+jasmine,original_query,test_visual_and_text_q00334,Medicine,Medicine_PMC10763142,2,2,,2026-10-27T11:35:21.640487
+jasmine,original_query,test_visual_and_text_q00335,Medicine,Medicine_PMC10763182,0,2,"query is way too vague and could correspond to a huge number of papers. Although no detail is technically mismatched, no detail meaningfully identifies the paper",2026-10-27T11:36:54.644685
+jasmine,original_query,test_visual_and_text_q00336,Medicine,Medicine_PMC10764834,2,2,,2026-10-27T11:39:20.995614
+jasmine,original_query,test_visual_and_text_q00337,Medicine,Medicine_PMC10767005,2,2,,2026-10-27T11:40:33.689838
+jasmine,original_query,test_visual_and_text_q00338,Medicine,Medicine_PMC10768213,2,2,,2026-10-27T11:49:47.239643
+jasmine,original_query,test_visual_and_text_q00339,Medicine,Medicine_PMC10769095,1,2,,2026-10-27T11:53:09.610120
+jasmine,original_query,test_visual_and_text_q00340,Medicine,Medicine_PMC10770204,2,2,,2026-10-27T11:55:16.550719
+jasmine,original_query,test_visual_and_text_q00341,Medicine,Medicine_PMC10770325,2,2,"chart description has misleading phrasing, but ultimately most details in the query correspond to the paper, hence the Highly Relevant rating",2026-10-27T11:58:43.672957
+jasmine,original_query,test_visual_and_text_q00342,Medicine,Medicine_PMC10770879,0,2,"the hint int the query ""button-like icon with a gray circular shape and a bookmark design, with text below it saying something like 'Check for updates.'"" is based on the formatting of the pdf based on the research website rather than the actual paper's content. In the prompt used to generate the queries, perhaps it might be good to add a line to ignore pdf formatting/icons",2026-10-27T12:02:53.856237
+jasmine,original_query,test_visual_and_text_q00343,Medicine,Medicine_PMC10771704,2,2,,2026-10-27T12:05:53.004710
+jasmine,original_query,test_visual_and_text_q00344,Medicine,Medicine_PMC10772428,1,2,the pictures of the surgical sites were gory. this made it uncomfortable to annotate this query.,2026-10-27T12:09:26.978990
+jasmine,original_query,test_visual_and_text_q00345,Medicine,Medicine_PMC10773016,2,2,,2026-10-27T12:11:16.124090
+jasmine,original_query,test_visual_and_text_q00346,Medicine,Medicine_PMC10773313,2,2,,2026-10-27T12:13:49.303602
+jasmine,original_query,test_visual_and_text_q00347,Medicine,Medicine_PMC10773478,1,2,,2026-10-27T12:17:09.524838
+jasmine,original_query,test_visual_and_text_q00348,Medicine,Medicine_PMC10775664,2,2,,2026-10-27T12:19:11.522696
+jasmine,original_query,test_visual_and_text_q00349,Medicine,Medicine_PMC10776501,2,2,,2026-10-27T12:20:17.662111
+jasmine,original_query,test_visual_and_text_q00440,Physics,Physics_1510.07810,2,2,,2026-10-27T12:22:57.314710
+jasmine,original_query,test_visual_and_text_q00441,Physics,Physics_1606.04412,2,2,,2026-10-27T12:27:27.152695
+jasmine,original_query,test_visual_and_text_q00442,Physics,Physics_1609.06847,2,2,,2026-10-27T12:29:20.161012
+jasmine,original_query,test_visual_and_text_q00443,Physics,Physics_1704.08177,1,2,,2026-10-27T12:33:42.788840
+jasmine,original_query,test_visual_and_text_q00444,Physics,Physics_1705.01636,2,2,,2026-10-27T12:36:19.301102
 jasmine,original_query,test_visual_and_text_q00445,Physics,Physics_1706.02110,,,,
 jasmine,original_query,test_visual_and_text_q00446,Physics,Physics_1706.07072,,,,
 jasmine,original_query,test_visual_and_text_q00447,Physics,Physics_1809.00094,,,,

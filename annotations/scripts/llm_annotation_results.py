@@ -1,7 +1,7 @@
 """Print the LLM relevance table: uv run python annotations/scripts/llm_annotation_results.py.
 
-Subset frequencies count each query once. Agreement pools all completed
-human ratings, pairing the LLM score with each annotator independently.
+Subset frequencies count each query once. Linear weighted kappa compares
+the LLM with each annotator separately and includes human-human agreement.
 Full frequencies count all saved judge records under data/query_collections.
 """
 
@@ -9,9 +9,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-from sklearn.metrics import cohen_kappa_score
-
-from annotation_results import load_annotations
+from annotation_results import calculate_results, load_annotations, weighted_kappa
 from common.jsonl import read_jsonl_objects
 from queries.count_query_judgements import read_judgement_value
 
@@ -35,9 +33,12 @@ def main():
             judges[key] = score
 
     subset = {}
-    pairs = []
+    human_annotations = []
+    comparisons = []
     for annotator in (1, 2):
         annotations = load_annotations(directory / f"original_query_annotator_{annotator}.csv")
+        human_annotations.append(annotations)
+        pairs = []
         completed = matched = 0
         for (task, query_id, dataset, document_id), scores in annotations.items():
             assert task == "original_query"
@@ -51,20 +52,18 @@ def main():
                 subset[key] = judges[key]
                 pairs.append((judges[key], human_score))
         print(f"Annotator {annotator}: {matched}/{completed} completed ratings matched", file=sys.stderr)
-    if not pairs:
+        comparisons.append((f"LLM vs. annotator {annotator}", weighted_kappa(pairs), len(pairs)))
+    if not subset:
         raise ValueError("No overlap between LLM and completed human relevance ratings")
 
+    _, human_kappa, human_n = calculate_results(*human_annotations, "relevance")
+    comparisons.append(("Annotator 1 vs. annotator 2", human_kappa, human_n))
     subset_counts = Counter(subset.values())
     full_counts = Counter(judges.values())
-    kappas = []
-    for score in range(3):
-        llm = [judge == score for judge, human in pairs]
-        humans = [human == score for judge, human in pairs]
-        # Kappa is undefined when both sides always choose the same binary value.
-        constant = len(set(llm + humans)) == 1
-        kappas.append(None if constant else cohen_kappa_score(llm, humans))
-    print(f"Subset: {len(subset)} unique queries; {len(pairs)} LLM-human pairs; {dict(subset_counts)}",
+    print(f"Subset: {len(subset)} unique queries; {dict(subset_counts)}",
           file=sys.stderr)
+    for comparison, kappa, n in comparisons:
+        print(f"{comparison}: {n} paired items; linear weighted kappa={kappa}", file=sys.stderr)
     print(f"Full: {len(judges)} saved judge records; {dict(sorted(full_counts.items()))}", file=sys.stderr)
 
     print(r"""\begin{table}[t]
@@ -74,14 +73,13 @@ def main():
 \begin{minipage}[t]{0.48\textwidth}
 \centering
 \textbf{Annotated Test Set}\\[4pt]
-\begin{tabularx}{\linewidth}{@{}Xrrr@{}}
+\begin{tabularx}{\linewidth}{@{}Xrr@{}}
 \toprule
-\textbf{Score} & \textbf{Freq.} & \textbf{Freq. (\%)} & \textbf{$\kappa$} \\
+\textbf{Score} & \textbf{Freq.} & \textbf{Freq. (\%)} \\
 \midrule""")
-    for score, kappa in enumerate(kappas):
+    for score in range(3):
         count = subset_counts[score]
-        agreement = "--" if kappa is None else f"{kappa:.3f}"
-        print(f"{score} & {count} & {100 * count / len(subset):.1f} & {agreement} " + r"\\")
+        print(f"{score} & {count} & {100 * count / len(subset):.1f} " + r"\\")
     print(r"""\bottomrule
 \end{tabularx}
 \end{minipage}
@@ -100,12 +98,24 @@ def main():
 \end{tabularx}
 \end{minipage}
 
+\medskip
+\begin{tabularx}{\linewidth}{@{}Xrr@{}}
+\toprule
+\textbf{Comparison} & \textbf{Paired items} & \textbf{Linear weighted $\kappa$} \\
+\midrule""")
+    for comparison, kappa, n in comparisons:
+        agreement = "--" if kappa is None else f"{kappa:.3f}"
+        print(f"{comparison} & {n} & {agreement} " + r"\\")
+    print(r"""\bottomrule
+\end{tabularx}
+
 \caption{Distribution of LLM-assigned relevance scores for
 the manually annotated test subset (left) and the full set of saved
 LLM judgements (right). Frequencies count each query once.
-Cohen's $\kappa$ measures one-vs-rest agreement between the LLM judge
-and human relevance annotations, pooling all available LLM--human pairs.
-Queries rated by both annotators contribute two agreement pairs.
+Linear weighted Cohen's $\kappa$ measures overall relevance agreement
+across scores 0, 1, and 2 for each pair of raters separately.
+Each comparison uses all items with completed ratings from both raters;
+the human--human reference does not require an LLM judgement.
 A dash denotes undefined $\kappa$.}
 \label{tab:llm-annotation-results}
 \vspace{-0.5cm}

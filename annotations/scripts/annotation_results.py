@@ -1,6 +1,6 @@
 """Print the annotation-results LaTeX table using the two annotator CSVs.
 
-Frequencies pool all nonempty ratings. One-vs-rest Cohen's kappa uses only
+Frequencies pool all nonempty ratings. Linear weighted Cohen's kappa uses only
 items rated by both annotators; an undefined kappa is displayed as ``--``.
 Run with: python annotations/scripts/annotation_results.py
 """
@@ -9,6 +9,8 @@ import csv
 import sys
 from collections import Counter
 from pathlib import Path
+
+from sklearn.metrics import cohen_kappa_score
 
 
 METRICS = {"relevance": "Relevance", "well_formedness": "Well-formedness"}
@@ -33,6 +35,14 @@ def load_annotations(path):
     return annotations
 
 
+def weighted_kappa(pairs):
+    """Return linear weighted kappa, or None when it is undefined."""
+    if not pairs or len({score for pair in pairs for score in pair}) == 1:
+        return None
+    first, second = zip(*pairs)
+    return cohen_kappa_score(first, second, labels=[0, 1, 2], weights="linear")
+
+
 def calculate_results(first, second, metric):
     counts = Counter(
         item[metric]
@@ -49,19 +59,10 @@ def calculate_results(first, second, metric):
         if first[key][metric] is not None and second[key][metric] is not None
     ]
     n = len(pairs)
-    results = []
-    for score in range(3):
-        # Binary decisions: this score versus every other score.
-        positives_a = sum(a == score for a, b in pairs)
-        positives_b = sum(b == score for a, b in pairs)
-        agreements = sum((a == score) == (b == score) for a, b in pairs)
-        expected = positives_a * positives_b + (n - positives_a) * (n - positives_b)
-        denominator = n * n - expected
-        kappa = (n * agreements - expected) / denominator if denominator else None
-        results.append((100 * counts[score] / total, kappa))
+    frequencies = [100 * counts[score] / total for score in range(3)]
     print(f"{metric}: {total} ratings; {n} paired items; counts={dict(sorted(counts.items()))}",
           file=sys.stderr)
-    return results
+    return frequencies, weighted_kappa(pairs), n
 
 
 def main():
@@ -80,21 +81,26 @@ def main():
         print(r"\begin{minipage}[t]{0.48\textwidth}")
         print(r"\centering")
         print(r"\textbf{" + title + r"}\\[4pt]")
-        print(r"""\begin{tabularx}{\linewidth}{@{}Xrr@{}}
+        print(r"""\begin{tabularx}{\linewidth}{@{}Xr@{}}
 \toprule
-\textbf{Score} & \textbf{Freq. (\%)} & \textbf{$\kappa$} \\
+\textbf{Score} & \textbf{Freq. (\%)} \\
 \midrule""")
-        for score, (frequency, kappa) in enumerate(results[metric]):
-            agreement = "--" if kappa is None else f"{kappa:.3f}"
-            print(f"{score} & {frequency:.1f} & {agreement} " + r"\\")
+        frequencies, kappa, n = results[metric]
+        for score, frequency in enumerate(frequencies):
+            print(f"{score} & {frequency:.1f} " + r"\\")
+        agreement = "--" if kappa is None else f"{kappa:.3f}"
+        print(r"\midrule")
+        print(r"Linear weighted $\kappa$ & " + agreement + r"\\")
+        print(f"Paired items & {n} " + r"\\")
         print(r"""\bottomrule
 \end{tabularx}
 \end{minipage}""")
     print(r"""
 \caption{Distribution of annotation scores for relevance and
 well-formedness. Frequency denotes the percentage of completed annotations
-assigned each score, and Cohen's $\kappa$ measures inter-annotator
-agreement for each score (one-vs-rest) on items rated by both annotators.
+assigned each score. Linear weighted Cohen's $\kappa$ measures overall
+agreement between annotators 1 and 2 across scores 0, 1, and 2,
+using only items rated by both annotators for the corresponding metric.
 A dash denotes undefined $\kappa$.}
 \label{tab:annotation-results}
     \vspace{-0.5cm}

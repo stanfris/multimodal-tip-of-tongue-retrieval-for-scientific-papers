@@ -5,13 +5,16 @@
 \begin{minipage}[t]{0.48\textwidth}
 \centering
 \textbf{Relevance}\\[4pt]
-\begin{tabularx}{\linewidth}{@{}Xrr@{}}
+\begin{tabularx}{\linewidth}{@{}Xr@{}}
 \toprule
-\textbf{Score} & \textbf{Freq. (\%)} & \textbf{$\kappa$} \\
+\textbf{Score} & \textbf{Freq. (\%)} \\
 \midrule
-0 & 0.0 & -- \\
-1 & 17.6 & 0.246 \\
-2 & 82.4 & 0.246 \\
+0 & 1.7 \\
+1 & 17.1 \\
+2 & 81.2 \\
+\midrule
+Linear weighted $\kappa$ & 0.365\\
+Paired items & 32 \\
 \bottomrule
 \end{tabularx}
 \end{minipage}
@@ -19,21 +22,25 @@
 \begin{minipage}[t]{0.48\textwidth}
 \centering
 \textbf{Well-formedness}\\[4pt]
-\begin{tabularx}{\linewidth}{@{}Xrr@{}}
+\begin{tabularx}{\linewidth}{@{}Xr@{}}
 \toprule
-\textbf{Score} & \textbf{Freq. (\%)} & \textbf{$\kappa$} \\
+\textbf{Score} & \textbf{Freq. (\%)} \\
 \midrule
-0 & 0.0 & -- \\
-1 & 4.1 & 0.000 \\
-2 & 95.9 & 0.000 \\
+0 & 0.0 \\
+1 & 2.6 \\
+2 & 97.4 \\
+\midrule
+Linear weighted $\kappa$ & 0.000\\
+Paired items & 32 \\
 \bottomrule
 \end{tabularx}
 \end{minipage}
 
 \caption{Distribution of annotation scores for relevance and
 well-formedness. Frequency denotes the percentage of completed annotations
-assigned each score, and Cohen's $\kappa$ measures inter-annotator
-agreement for each score (one-vs-rest) on items rated by both annotators.
+assigned each score. Linear weighted Cohen's $\kappa$ measures overall
+agreement between annotators 1 and 2 across scores 0, 1, and 2,
+using only items rated by both annotators for the corresponding metric.
 A dash denotes undefined $\kappa$.}
 \label{tab:annotation-results}
     \vspace{-0.5cm}
