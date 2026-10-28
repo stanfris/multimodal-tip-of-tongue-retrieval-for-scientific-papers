@@ -1,6 +1,6 @@
 # Multimodal Tip-of-the-Tongue Retrieval for Scientific Papers
 
-This repository is part of the paper `Multimodal Tip-of-the-Tongue Retrieval for Scientific Papers`. Here, we provide all of the code necessary to generate all components of our dataset, in order to provide a basis for future work in generating queries and documents. We also provide instructions to only download our dataset, hosted on [HuggingFace](https://huggingface.co/datasets/kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-documents), such that you can use it directly.
+This repository is part of the paper `Multimodal Tip-of-the-Tongue Retrieval for Scientific Papers`. Here, we provide all of the code necessary to generate all components of our dataset, in order to provide a basis for future work in generating queries and documents. We also provide instructions to only download our dataset, hosted on [HuggingFace](https://huggingface.co/datasets/kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-documents), such that you can use it directly, as well as [Retrieval Baselines](https://github.com/stanfris/multimodal-tot-retrieval) to run retrieval models on this dataset.
 
 Our instructions first explain how to download the full dataset. Further sections explain repository structure, and how to run key elements of the query generation pipeline.
 ## Downloading the Dataset from Huggingface
