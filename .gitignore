@@ -12,6 +12,8 @@ wheels/
 
 # Generated dataset artifacts
 data/
+!/annotations/data/
+!/annotations/data/*.csv
 data_archive/
 archive/
 

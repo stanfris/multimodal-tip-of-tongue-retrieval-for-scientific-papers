@@ -1,0 +1,42 @@
+\begin{table}[t]
+\centering
+\footnotesize
+
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\textbf{Annotated Test Set}\\[4pt]
+\begin{tabularx}{\linewidth}{@{}Xrrr@{}}
+\toprule
+\textbf{Score} & \textbf{Freq.} & \textbf{Freq. (\%)} & \textbf{$\kappa$} \\
+\midrule
+0 & 0 & 0.0 & -- \\
+1 & 0 & 0.0 & 0.000 \\
+2 & 51 & 100.0 & 0.000 \\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\textbf{Full Dataset}\\[4pt]
+\begin{tabularx}{\linewidth}{@{}Xrr@{}}
+\toprule
+\textbf{Score} & \textbf{Freq.} & \textbf{Freq. (\%)} \\
+\midrule
+0 & 2 & 0.02 \\
+1 & 369 & 3.21 \\
+2 & 11130 & 96.77 \\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+
+\caption{Distribution of LLM-assigned relevance scores for
+the manually annotated test subset (left) and the full set of saved
+LLM judgements (right). Frequencies count each query once.
+Cohen's $\kappa$ measures one-vs-rest agreement between the LLM judge
+and human relevance annotations, pooling all available LLM--human pairs.
+Queries rated by both annotators contribute two agreement pairs.
+A dash denotes undefined $\kappa$.}
+\label{tab:llm-annotation-results}
+\vspace{-0.5cm}
+\end{table}

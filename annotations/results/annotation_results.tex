@@ -1,0 +1,40 @@
+\begin{table}[t]
+\centering
+\footnotesize
+
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\textbf{Relevance}\\[4pt]
+\begin{tabularx}{\linewidth}{@{}Xrr@{}}
+\toprule
+\textbf{Score} & \textbf{Freq. (\%)} & \textbf{$\kappa$} \\
+\midrule
+0 & 0.0 & -- \\
+1 & 17.6 & 0.246 \\
+2 & 82.4 & 0.246 \\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\textbf{Well-formedness}\\[4pt]
+\begin{tabularx}{\linewidth}{@{}Xrr@{}}
+\toprule
+\textbf{Score} & \textbf{Freq. (\%)} & \textbf{$\kappa$} \\
+\midrule
+0 & 0.0 & -- \\
+1 & 4.1 & 0.000 \\
+2 & 95.9 & 0.000 \\
+\bottomrule
+\end{tabularx}
+\end{minipage}
+
+\caption{Distribution of annotation scores for relevance and
+well-formedness. Frequency denotes the percentage of completed annotations
+assigned each score, and Cohen's $\kappa$ measures inter-annotator
+agreement for each score (one-vs-rest) on items rated by both annotators.
+A dash denotes undefined $\kappa$.}
+\label{tab:annotation-results}
+    \vspace{-0.5cm}
+\end{table}

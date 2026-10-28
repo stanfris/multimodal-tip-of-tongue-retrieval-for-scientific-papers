@@ -329,8 +329,17 @@ This creates `data/test_sample_20_per_dataset.zip` with 20 query-linked test PDF
 
 ### Annotation
 
-The `annotations/` folder provides the annotations and the web-pages used to perform an analysis of tip-of-the-tongue queries found on the internet. The notebook `annotations/analysis.ipynb` provides the code which was used to compute percentages and annotator agreement. 
+The `annotations/data/` folder provides the annotations used to perform an analysis of tip-of-the-tongue queries found on the internet (`online_annotated_queries.csv`), the annotations made using the same codebook for the generated queries (`codebook_alternative_query_annotator_x.csv` files), as well as the annotations made for query relevance and well-formedness (`original_query_annotator_x.csv` files).
 
+Analysis scripts and the `online_query_analysis.ipynb` notebook are in `annotations/scripts/`. Generated LaTeX tables and PNG/PDF figures are in `annotations/results/`. The scripts resolve input paths relative to their location; the notebook locates its data when launched from the repository root or any subfolder.
+
+Regenerate the results from the repository root:
+
+```bash
+uv run python annotations/scripts/annotation_results.py > annotations/results/annotation_results.tex
+uv run python annotations/scripts/llm_annotation_results.py > annotations/results/llm_annotation_results.tex
+uv run python annotations/scripts/plot_code_frequencies.py
+```
 
 
 ### License
