@@ -1,17 +1,35 @@
 """Print the LLM relevance table: uv run python annotations/scripts/llm_annotation_results.py.
 
-Subset frequencies count each query once. Linear weighted kappa compares
-the LLM with each annotator separately and includes human-human agreement.
+Subset frequencies count each query once. Linear weighted kappa and unweighted
+Gwet's AC1 compare each rater pair using the fixed score categories 0, 1, and 2.
 Full frequencies count all saved judge records under data/query_collections.
 """
 
 import sys
 from collections import Counter
 from pathlib import Path
+from statistics import mean
 
-from annotation_results import calculate_results, load_annotations, weighted_kappa
+from annotation_results import load_annotations, weighted_kappa
 from common.jsonl import read_jsonl_objects
 from queries.count_query_judgements import read_judgement_value
+
+
+def gwet_ac1(pairs):
+    """Unweighted AC1 for two raters on the full three-category score scale.
+
+    Gwet's expected agreement is sum(p_k * (1 - p_k)) / (q - 1),
+    where p_k pools both raters' category proportions and q = 3.
+    See https://www.agreestat.com/documents/agreestatguide.pdf.
+    """
+    if not pairs:
+        return None
+    n = len(pairs)
+    observed = sum(first == second for first, second in pairs) / n
+    counts = Counter(score for pair in pairs for score in pair)
+    proportions = [counts[score] / (2 * n) for score in range(3)]
+    expected = sum(p * (1 - p) for p in proportions) / 2
+    return (observed - expected) / (1 - expected)
 
 
 def main():
@@ -33,11 +51,9 @@ def main():
             judges[key] = score
 
     subset = {}
-    human_annotations = []
     comparisons = []
     for annotator in (1, 2):
         annotations = load_annotations(directory / f"original_query_annotator_{annotator}.csv")
-        human_annotations.append(annotations)
         pairs = []
         completed = matched = 0
         for (task, query_id, dataset, document_id), scores in annotations.items():
@@ -52,34 +68,45 @@ def main():
                 subset[key] = judges[key]
                 pairs.append((judges[key], human_score))
         print(f"Annotator {annotator}: {matched}/{completed} completed ratings matched", file=sys.stderr)
-        comparisons.append((f"LLM vs. annotator {annotator}", weighted_kappa(pairs), len(pairs)))
+        comparisons.append((f"LLM vs. annotator {annotator}", weighted_kappa(pairs), gwet_ac1(pairs), len(pairs)))
     if not subset:
         raise ValueError("No overlap between LLM and completed human relevance ratings")
 
-    _, human_kappa, human_n = calculate_results(*human_annotations, "relevance")
-    comparisons.append(("Annotator 1 vs. annotator 2", human_kappa, human_n))
+    kappas = [comparison[1] for comparison in comparisons]
+    ac1s = [comparison[2] for comparison in comparisons]
+    mean_kappa = None if None in kappas else mean(kappas)
+    mean_ac1 = None if None in ac1s else mean(ac1s)
     subset_counts = Counter(subset.values())
     full_counts = Counter(judges.values())
     print(f"Subset: {len(subset)} unique queries; {dict(subset_counts)}",
           file=sys.stderr)
-    for comparison, kappa, n in comparisons:
-        print(f"{comparison}: {n} paired items; linear weighted kappa={kappa}", file=sys.stderr)
+    for comparison, kappa, ac1, n in comparisons:
+        print(f"{comparison}: {n} paired items; linear weighted kappa={kappa}; AC1={ac1}", file=sys.stderr)
     print(f"Full: {len(judges)} saved judge records; {dict(sorted(full_counts.items()))}", file=sys.stderr)
 
     print(r"""\begin{table}[t]
 \centering
 \footnotesize
+\caption{Distribution of LLM-assigned relevance scores for
+the annotated test subset (left) and all saved LLM judgements (right).
+Frequencies count each query once. Linear-weighted Cohen's $\bar\kappa$ is
+the arithmetic mean of the two LLM--annotator comparisons, with equal weight
+per annotator.""")
+    ac1_text = "--" if mean_ac1 is None else f"{mean_ac1:.3f}"
+    print("Mean unweighted Gwet's AC1 over the fixed categories 0, 1, and 2 is " + ac1_text + ".}")
+    print(r"""\label{tab:llm-annotation-results}
 
 \begin{minipage}[t]{0.48\textwidth}
-\centering
-\textbf{Annotated Test Set}\\[4pt]
-\begin{tabularx}{\linewidth}{@{}Xrr@{}}
+\centering""")
+    kappa_text = "--" if mean_kappa is None else f"{mean_kappa:.3f}"
+    print(r"\textbf{Annotated Test Set ($\bar\kappa = " + kappa_text + r"$)}\\[4pt]")
+    print(r"""\begin{tabularx}{\linewidth}{@{}Xr@{}}
 \toprule
-\textbf{Score} & \textbf{Freq.} & \textbf{Freq. (\%)} \\
+\textbf{Score} & \textbf{Freq. (\%)} \\
 \midrule""")
     for score in range(3):
         count = subset_counts[score]
-        print(f"{score} & {count} & {100 * count / len(subset):.1f} " + r"\\")
+        print(f"{score} & {100 * count / len(subset):.1f} " + r"\\")
     print(r"""\bottomrule
 \end{tabularx}
 \end{minipage}
@@ -97,27 +124,6 @@ def main():
     print(r"""\bottomrule
 \end{tabularx}
 \end{minipage}
-
-\medskip
-\begin{tabularx}{\linewidth}{@{}Xrr@{}}
-\toprule
-\textbf{Comparison} & \textbf{Paired items} & \textbf{Linear weighted $\kappa$} \\
-\midrule""")
-    for comparison, kappa, n in comparisons:
-        agreement = "--" if kappa is None else f"{kappa:.3f}"
-        print(f"{comparison} & {n} & {agreement} " + r"\\")
-    print(r"""\bottomrule
-\end{tabularx}
-
-\caption{Distribution of LLM-assigned relevance scores for
-the manually annotated test subset (left) and the full set of saved
-LLM judgements (right). Frequencies count each query once.
-Linear weighted Cohen's $\kappa$ measures overall relevance agreement
-across scores 0, 1, and 2 for each pair of raters separately.
-Each comparison uses all items with completed ratings from both raters;
-the human--human reference does not require an LLM judgement.
-A dash denotes undefined $\kappa$.}
-\label{tab:llm-annotation-results}
 \vspace{-0.5cm}
 \end{table}""")
 

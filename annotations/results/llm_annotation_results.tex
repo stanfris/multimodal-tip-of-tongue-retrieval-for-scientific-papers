@@ -1,17 +1,24 @@
 \begin{table}[t]
 \centering
 \footnotesize
+\caption{Distribution of LLM-assigned relevance scores for
+the annotated test subset (left) and all saved LLM judgements (right).
+Frequencies count each query once. Linear-weighted Cohen's $\bar\kappa$ is
+the arithmetic mean of the two LLM--annotator comparisons, with equal weight
+per annotator.
+Mean unweighted Gwet's AC1 over the fixed categories 0, 1, and 2 is 0.931.}
+\label{tab:llm-annotation-results}
 
 \begin{minipage}[t]{0.48\textwidth}
 \centering
-\textbf{Annotated Test Set}\\[4pt]
-\begin{tabularx}{\linewidth}{@{}Xrr@{}}
+\textbf{Annotated Test Set ($\bar\kappa = 0.362$)}\\[4pt]
+\begin{tabularx}{\linewidth}{@{}Xr@{}}
 \toprule
-\textbf{Score} & \textbf{Freq.} & \textbf{Freq. (\%)} \\
+\textbf{Score} & \textbf{Freq. (\%)} \\
 \midrule
-0 & 0 & 0.0 \\
-1 & 3 & 3.4 \\
-2 & 85 & 96.6 \\
+0 & 0.0 \\
+1 & 3.0 \\
+2 & 97.0 \\
 \bottomrule
 \end{tabularx}
 \end{minipage}
@@ -29,26 +36,5 @@
 \bottomrule
 \end{tabularx}
 \end{minipage}
-
-\medskip
-\begin{tabularx}{\linewidth}{@{}Xrr@{}}
-\toprule
-\textbf{Comparison} & \textbf{Paired items} & \textbf{Linear weighted $\kappa$} \\
-\midrule
-LLM vs. annotator 1 & 88 & 0.196 \\
-LLM vs. annotator 2 & 60 & 0.000 \\
-Annotator 1 vs. annotator 2 & 60 & 0.267 \\
-\bottomrule
-\end{tabularx}
-
-\caption{Distribution of LLM-assigned relevance scores for
-the manually annotated test subset (left) and the full set of saved
-LLM judgements (right). Frequencies count each query once.
-Linear weighted Cohen's $\kappa$ measures overall relevance agreement
-across scores 0, 1, and 2 for each pair of raters separately.
-Each comparison uses all items with completed ratings from both raters;
-the human--human reference does not require an LLM judgement.
-A dash denotes undefined $\kappa$.}
-\label{tab:llm-annotation-results}
 \vspace{-0.5cm}
 \end{table}

@@ -74,36 +74,33 @@ def main():
     print(r"""\begin{table}[t]
 \centering
 \footnotesize
+\caption{Distribution of human annotation scores for relevance and
+well-formedness. Frequencies indicate the percentage of completed
+annotations assigned each score. Linear-weighted Cohen's $\kappa$
+measures inter-annotator agreement on paired items.""")
+    print(f"Relevance uses {results['relevance'][2]} paired items and well-formedness "
+          f"uses {results['well_formedness'][2]} paired items." + "}")
+    print(r"""\label{tab:annotation-results}
 """)
     for index, (metric, title) in enumerate(METRICS.items()):
         if index:
             print(r"\hfill")
         print(r"\begin{minipage}[t]{0.48\textwidth}")
         print(r"\centering")
-        print(r"\textbf{" + title + r"}\\[4pt]")
+        frequencies, kappa, n = results[metric]
+        kappa_text = "--" if kappa is None else f"{kappa:.3f}"
+        print(r"\textbf{" + title + r" ($\kappa = " + kappa_text + r"$)}\\[4pt]")
         print(r"""\begin{tabularx}{\linewidth}{@{}Xr@{}}
 \toprule
 \textbf{Score} & \textbf{Freq. (\%)} \\
 \midrule""")
-        frequencies, kappa, n = results[metric]
         for score, frequency in enumerate(frequencies):
             print(f"{score} & {frequency:.1f} " + r"\\")
-        agreement = "--" if kappa is None else f"{kappa:.3f}"
-        print(r"\midrule")
-        print(r"Linear weighted $\kappa$ & " + agreement + r"\\")
-        print(f"Paired items & {n} " + r"\\")
         print(r"""\bottomrule
 \end{tabularx}
 \end{minipage}""")
     print(r"""
-\caption{Distribution of annotation scores for relevance and
-well-formedness. Frequency denotes the percentage of completed annotations
-assigned each score. Linear weighted Cohen's $\kappa$ measures overall
-agreement between annotators 1 and 2 across scores 0, 1, and 2,
-using only items rated by both annotators for the corresponding metric.
-A dash denotes undefined $\kappa$.}
-\label{tab:annotation-results}
-    \vspace{-0.5cm}
+\vspace{-0.5cm}
 \end{table}""")
 
 
