@@ -84,9 +84,9 @@ jasmine,original_query,test_visual_and_text_q00441,Physics,Physics_1606.04412,2,
 jasmine,original_query,test_visual_and_text_q00442,Physics,Physics_1609.06847,2,2,,2026-10-27T12:29:20.161012
 jasmine,original_query,test_visual_and_text_q00443,Physics,Physics_1704.08177,1,2,,2026-10-27T12:33:42.788840
 jasmine,original_query,test_visual_and_text_q00444,Physics,Physics_1705.01636,2,2,,2026-10-27T12:36:19.301102
-jasmine,original_query,test_visual_and_text_q00445,Physics,Physics_1706.02110,,,,
-jasmine,original_query,test_visual_and_text_q00446,Physics,Physics_1706.07072,,,,
-jasmine,original_query,test_visual_and_text_q00447,Physics,Physics_1809.00094,,,,
+jasmine,original_query,test_visual_and_text_q00445,Physics,Physics_1706.02110,1,2,,2026-10-28T12:45:37.019703
+jasmine,original_query,test_visual_and_text_q00446,Physics,Physics_1706.07072,2,2,,2026-10-28T14:35:01.522152
+jasmine,original_query,test_visual_and_text_q00447,Physics,Physics_1809.00094,2,2,,2026-10-28T15:21:49.807618
 jasmine,original_query,test_visual_and_text_q00448,Physics,Physics_1811.03714,,,,
 jasmine,original_query,test_visual_and_text_q00449,Physics,Physics_2010.13607,,,,
 jasmine,original_query,test_visual_and_text_q00450,Physics,Physics_2011.05368,,,,
