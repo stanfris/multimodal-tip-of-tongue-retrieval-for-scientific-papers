@@ -14,10 +14,11 @@ hf download kasys/multimodal-tip-of-the-tongue-retrieval-for-scientific-document
 This does not handle extraction, workers, or partial components however, we provide these below. The scripts shown below handle each of these components and should be run on a machine with sufficient storage space (at least 500GB of free space). Download selected components into the normal `data/` layout. The downloader
 keeps the filtered Hub snapshot and transfer state under
 `data/.hf_dataset_download/kasys--multimodal-tip-of-the-tongue-retrieval-for-scientific-documents/`,
-so rerunning a command resumes downloads and skips matching restored files.
+so rerunning a command resumes downloads and skips matching restored files. First install the environment to download the dataset. 
 From the repository root, run the script with no arguments to download and restore everything (PDFs, preprocessed content, clues, query collections, and splits) under the default `data/` directory:
 
 ```bash
+scripts/environment/sync_env.sh
 scripts/packaging/download_huggingface_dataset.sh
 ```
 
