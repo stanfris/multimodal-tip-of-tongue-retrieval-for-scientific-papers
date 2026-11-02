@@ -287,16 +287,6 @@ Query generation considers at most the first 15 images in each paper. Set `visua
 
 By default, query generation requires usable clues for every considered figure. Set `visual_query.selection.allow_missing_figure_clues=true` to use the available figure clues when some are missing. A paper still needs a usable textual clue and at least one usable figure clue.
 
-### Test sample
-
-To make a small review bundle from the PDF test split, run:
-
-```bash
-bash scripts/packaging/export_test_sample.sh
-```
-
-This creates `data/test_sample_20_per_dataset.zip` with 20 query-linked test PDFs from each of ACL, Biology, Engineering, Medicine, and Physics. PDFs are under `pdfs/<dataset>/`; `queries.json` lists each PDF path, document ID, query ID, mode, and actual query text. The script uses local files under `data/` when present and downloads missing split, query, and PDF files from the published Hugging Face dataset. Use `--output PATH` for another ZIP location, `--data-root PATH` for another local dataset root, or `--offline` to require local files.
-
 ### Annotation
 
 The `annotations/data/` folder provides the annotations used to perform an analysis of tip-of-the-tongue queries found on the internet (`online_annotated_queries.csv`), the annotations made using the same codebook for the generated queries (`codebook_alternative_query_annotator_x.csv` files), as well as the annotations made for query relevance and well-formedness (`original_query_annotator_x.csv` files).
